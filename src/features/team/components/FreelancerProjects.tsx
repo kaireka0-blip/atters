@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { TeamProjectPayment, Project } from '../../../types';
 import { formatDate } from '../utils/teamUtils';
 
@@ -146,13 +146,12 @@ export const UnpaidTeamPaymentsSection: React.FC<UnpaidTeamPaymentsSectionProps>
 
 const FreelancerProjects: React.FC<FreelancerProjectsProps> = ({ projects, memberId }) => {
   const showFee = Boolean(memberId);
-  const [activeGroup, setActiveGroup] = useState<'month' | 'upcoming' | 'completed' | 'other'>('month');
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const todayStart = today.getTime();
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth();
-  const monthLabel = today.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+  const monthLabel = today.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' });
 
   const groupedProjects = useMemo(() => {
     const groups: Record<'month' | 'upcoming' | 'completed' | 'other', Project[]> = {
@@ -189,7 +188,6 @@ const FreelancerProjects: React.FC<FreelancerProjectsProps> = ({ projects, membe
     { id: 'completed' as const, label: 'Selesai', count: groupedProjects.completed.length },
     { id: 'other' as const, label: 'Lainnya', count: groupedProjects.other.length },
   ];
-  const rows = groupedProjects[activeGroup];
 
   if (projects.filter((project) => project.status !== 'Dibatalkan').length === 0) {
     return (
@@ -201,63 +199,55 @@ const FreelancerProjects: React.FC<FreelancerProjectsProps> = ({ projects, membe
 
   return (
     <div className="space-y-2.5">
-      <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-        {groupOptions.map((group) => {
-          const active = activeGroup === group.id;
-          return (
-            <button
-              key={group.id}
-              type="button"
-              onClick={() => setActiveGroup(group.id)}
-              className={`flex items-center justify-between gap-1 rounded-lg border px-2 py-2 text-[10px] font-semibold transition-colors sm:text-xs ${active ? 'border-brand-accent bg-brand-accent text-white' : 'border-brand-border bg-brand-bg text-brand-text-secondary hover:border-brand-accent/40'}`}
-            >
-              <span className="truncate">{group.id === 'month' ? `Bulan Ini · ${monthLabel}` : group.label}</span>
-              <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[9px] ${active ? 'bg-white/20 text-white' : 'bg-brand-surface text-brand-text-primary'}`}>{group.count}</span>
-            </button>
-          );
-        })}
-      </div>
-      {rows.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-brand-border px-3 py-6 text-center text-xs text-brand-text-secondary">
-          Belum ada acara dalam kategori {activeGroup === 'month' ? `Bulan Ini (${monthLabel})` : groupOptions.find((group) => group.id === activeGroup)?.label}.
-        </p>
-      ) : <div className="overflow-hidden rounded-xl border border-brand-border">
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-xs sm:text-sm">
-          <thead className="bg-brand-bg">
-            <tr className="border-b border-brand-border">
-              <th className={`${thClass} whitespace-nowrap`}>Tanggal</th>
-              <th className={thClass}>Acara</th>
-              <th className={`${thClass} hidden md:table-cell`}>Lokasi</th>
-              <th className={thClass}>Status</th>
-              {showFee && <th className={`${thClass} text-right`}>Gaji</th>}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-brand-border/60">
-            {rows.map((project) => {
-              const assigned = memberId
-                ? project.team?.find((member) => member.memberId === memberId)
-                : undefined;
-              return (
-                <tr key={project.id} className="hover:bg-brand-bg/40">
-                  <td className={`${tdClass} whitespace-nowrap text-brand-text-secondary`}>{project.date ? formatDate(project.date) : '-'}</td>
-                  <td className={`${tdClass} font-semibold`}>{project.projectName}</td>
-                  <td className={`${tdClass} hidden text-brand-text-secondary md:table-cell`}>{project.location || '-'}</td>
-                  <td className={tdClass}>
-                    <span className={`inline-flex max-w-[120px] rounded-full border px-2 py-0.5 text-[9px] font-semibold leading-tight sm:text-[10px] ${getProjectStatusClassName(project.status)}`}>
-                      {project.status}
-                    </span>
-                  </td>
-                  {showFee && (
-                    <td className={`${tdClass} whitespace-nowrap text-right font-bold`}>{formatCurrency(assigned?.fee ?? 0)}</td>
-                  )}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-      </div>}
+      {groupOptions.map(group => {
+        const rows = groupedProjects[group.id];
+        const title = group.id === 'month' ? `Bulan Ini · ${monthLabel}` : group.label;
+        return (
+          <section key={group.id} className="overflow-hidden rounded-xl border border-brand-border">
+            <div className="flex items-center justify-between gap-2 bg-brand-bg/70 px-3 py-2">
+              <h4 className="min-w-0 truncate text-[10px] font-bold text-brand-text-primary sm:text-xs">{title}</h4>
+              <span className="shrink-0 rounded-full bg-brand-surface px-1.5 py-0.5 text-[9px] font-semibold text-brand-text-primary">{group.count}</span>
+            </div>
+            {rows.length === 0 ? (
+              <p className="px-3 py-3 text-center text-[10px] text-brand-text-secondary">Belum ada acara.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-xs sm:text-sm">
+                  <thead className="bg-brand-bg/40">
+                    <tr className="border-b border-brand-border">
+                      <th className={`${thClass} whitespace-nowrap`}>Tanggal</th>
+                      <th className={thClass}>Acara</th>
+                      <th className={`${thClass} hidden md:table-cell`}>Lokasi</th>
+                      <th className={thClass}>Status</th>
+                      {showFee && <th className={`${thClass} text-right`}>Gaji</th>}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-brand-border/60">
+                    {rows.map(project => {
+                      const assigned = memberId
+                        ? project.team?.find(member => member.memberId === memberId)
+                        : undefined;
+                      return (
+                        <tr key={project.id} className="hover:bg-brand-bg/40">
+                          <td className={`${tdClass} whitespace-nowrap text-brand-text-secondary`}>{project.date ? formatDate(project.date) : '-'}</td>
+                          <td className={`${tdClass} font-semibold`}>{project.projectName}</td>
+                          <td className={`${tdClass} hidden text-brand-text-secondary md:table-cell`}>{project.location || '-'}</td>
+                          <td className={tdClass}>
+                            <span className={`inline-flex max-w-[120px] rounded-full border px-2 py-0.5 text-[9px] font-semibold leading-tight sm:text-[10px] ${getProjectStatusClassName(project.status)}`}>
+                              {project.status}
+                            </span>
+                          </td>
+                          {showFee && <td className={`${tdClass} whitespace-nowrap text-right font-bold`}>{formatCurrency(assigned?.fee ?? 0)}</td>}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        );
+      })}
     </div>
   );
 };

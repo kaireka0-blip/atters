@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Kanban, Table, SlidersHorizontal, ChevronDown, ChevronUp, X, Copy, ExternalLink, Package as PackageIconLucide, MapPin } from 'lucide-react';
 import { MobileCollapsibleSection } from '../../components/ui/MobileProgressiveDisclosure';
 import TablePagination from '../../shared/ui/TablePagination';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 // Helper function to escape special regex characters
 const escapeRegExp = (string: string) => {
@@ -15,7 +16,7 @@ import RupiahInput from '../../shared/form/RupiahInput';
 import { PlusIcon, PencilIcon, Trash2Icon, Share2Icon, DownloadIcon, SendIcon, UsersIcon, TargetIcon, TrendingUpIcon, CalendarIcon, MapPinIcon, QrCodeIcon, MessageSquareIcon, CameraIcon, FileTextIcon, PhoneIncomingIcon, LightbulbIcon, ChevronRightIcon, CheckCircleIcon, EyeIcon, LinkIcon, WhatsappIcon, DEFAULT_PACKAGE_SHARE_TEMPLATE, DEFAULT_BOOKING_FORM_TEMPLATE } from '../../constants';
 import { ModernStatCard } from '../../components/modernize/ModernStatCard';
 import { cleanPhoneNumber, resolveLeadStatus } from '../../constants';
-import { listLeads as _listLeads, createLead as createLeadRow, updateLead as updateLeadRow, deleteLead as deleteLeadRow } from '../../services/leads';
+import { listLeads as _listLeads, listLeadsPaginated, createLead as createLeadRow, updateLead as updateLeadRow, deleteLead as deleteLeadRow } from '../../services/leads';
 import { createClient as createClientRow } from '../../services/clients';
 import { createProject as createProjectRow } from '../../services/projects';
 import { createTransaction as createTransactionRow, updateCardBalance } from '../../services/transactions';
@@ -663,6 +664,7 @@ interface LeadsProps {
 export const Leads: React.FC<LeadsProps> = ({
     leads, setLeads, clients, setClients, projects, setProjects, packages, addOns, transactions, setTransactions, userProfile, setProfile, showNotification, handleNavigation, cards, setCards, pockets, setPockets, promoCodes, setPromoCodes, totals, initialAction, setInitialAction
 }) => {
+    const queryClient = useQueryClient();
     const [draggedLeadId, setDraggedLeadId] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'add' | 'edit' | 'convert'>('add');
@@ -815,10 +817,33 @@ export const Leads: React.FC<LeadsProps> = ({
         setCurrentPage(1);
     }, [searchTerm, sourceFilter, cityFilter, dateFrom, dateTo, activeCardFilter, mobileStatusTab]);
 
-    const paginatedLeads = useMemo(() => {
-        const start = (currentPage - 1) * itemsPerPage;
-        return filteredLeads.slice(start, start + itemsPerPage);
-    }, [filteredLeads, currentPage, itemsPerPage]);
+    useEffect(() => {
+        void queryClient.invalidateQueries({ queryKey: ['leads', 'page'] });
+    }, [leads, queryClient]);
+
+    const activeLeadStatus = mobileStatusTab === 'all'
+        ? (activeCardFilter?.type === 'active' ? 'active' : activeCardFilter?.type === 'converted' ? LeadStatus.CONVERTED : undefined)
+        : mobileStatusTab;
+    const effectiveLeadSource = activeCardFilter?.type === 'source' ? activeCardFilter.value : sourceFilter;
+    const effectiveLeadCity = activeCardFilter?.type === 'city' ? activeCardFilter.value : cityFilter;
+    const leadPageQuery = useQuery({
+        queryKey: ['leads', 'page', currentPage, itemsPerPage, searchTerm, effectiveLeadSource, effectiveLeadCity, dateFrom, dateTo, activeLeadStatus],
+        queryFn: () => listLeadsPaginated(currentPage, itemsPerPage, {
+            search: searchTerm,
+            source: effectiveLeadSource === 'all' ? undefined : effectiveLeadSource,
+            city: effectiveLeadCity === 'all' ? undefined : effectiveLeadCity,
+            dateFrom: dateFrom || undefined,
+            dateTo: dateTo || undefined,
+            status: activeLeadStatus === 'active' ? undefined : activeLeadStatus,
+            activeOnly: activeLeadStatus === 'active',
+        }),
+        placeholderData: previous => previous,
+    });
+    const paginatedLeads = (leadPageQuery.data?.leads || []).map(lead => {
+        const status = resolveLeadStatus(lead);
+        return status === lead.status ? lead : { ...lead, status };
+    });
+    const leadPageTotal = leadPageQuery.data?.total || 0;
 
     const handleDragStart = (e: React.DragEvent<HTMLDivElement>, leadId: string) => {
         e.dataTransfer.setData("leadId", leadId);
@@ -1691,7 +1716,7 @@ export const Leads: React.FC<LeadsProps> = ({
                             </div>
                             <TablePagination
                                 currentPage={currentPage}
-                                totalItems={filteredLeads.length}
+                                totalItems={leadPageTotal}
                                 itemsPerPage={itemsPerPage}
                                 onPageChange={setCurrentPage}
                                 onItemsPerPageChange={setItemsPerPage}
@@ -1895,7 +1920,7 @@ export const Leads: React.FC<LeadsProps> = ({
                             {/* Table footer with Pagination */}
                             <TablePagination
                                 currentPage={currentPage}
-                                totalItems={filteredLeads.length}
+                                totalItems={leadPageTotal}
                                 itemsPerPage={itemsPerPage}
                                 onPageChange={setCurrentPage}
                                 onItemsPerPageChange={setItemsPerPage}

@@ -19,7 +19,7 @@ export const TablePagination: React.FC<TablePaginationProps> = ({
   onPageChange,
   onItemsPerPageChange,
   label = 'data',
-  pageSizeOptions = [10, 20],
+  pageSizeOptions = [10, 20, 50],
   className = '',
 }) => {
   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
@@ -29,10 +29,7 @@ export const TablePagination: React.FC<TablePaginationProps> = ({
     else if (currentPage < 1) onPageChange(1);
   }, [currentPage, totalPages, onPageChange]);
 
-  // If no items at all, don't show navigation
-  if (totalItems === 0) return null;
-
-  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const startItem = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
   // Generate page numbers with window of 5

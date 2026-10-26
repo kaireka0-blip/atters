@@ -130,7 +130,7 @@ export async function listProjects(options: { limit?: number; offset?: number } 
 
 export async function listProjectsPaginated(
   page: number = 1,
-  limit: number = 20,
+  limit: number = 10,
   searchQuery?: string,
   filters?: {
     status?: string;
@@ -138,13 +138,15 @@ export async function listProjectsPaginated(
     projectType?: string;
     dateFrom?: string;
     dateTo?: string;
+    statusGroup?: 'active' | 'completed';
+    sortDir?: 'asc' | 'desc';
   }
 ): Promise<{
   projects: Project[];
   total: number;
   hasMore: boolean;
 }> {
-  const pageSize = Math.min(20, Math.max(1, Math.floor(limit) || 20));
+  const pageSize = [10, 20, 50].includes(limit) ? limit : 10;
   const safePage = Math.max(1, Math.floor(page) || 1);
   const offset = (safePage - 1) * pageSize;
 
@@ -161,6 +163,8 @@ export async function listProjectsPaginated(
   if (filters?.status) {
     query = query.eq('status', filters.status);
   }
+  if (filters?.statusGroup === 'active') query = query.not('status', 'in', '(Selesai,Dibatalkan)');
+  if (filters?.statusGroup === 'completed') query = query.in('status', ['Selesai', 'Dibatalkan']);
 
   if (filters?.clientId) {
     query = query.eq('client_id', filters.clientId);
@@ -179,9 +183,10 @@ export async function listProjectsPaginated(
   }
 
   // Data and exact count arrive in one request; avoid a second full count scan.
+  const ascending = filters?.sortDir === 'asc';
   const { data, error, count } = await query
-    .order('date', { ascending: false })
-    .order('id', { ascending: false })
+    .order('date', { ascending })
+    .order('id', { ascending })
     .range(offset, offset + pageSize - 1);
 
   if (error) throw error;
@@ -648,14 +653,12 @@ export async function getProjectWithRelations(
 
 // Enhanced function to list projects with all related data
 export async function listProjectsWithRelations(options: { limit?: number; offset?: number } = {}): Promise<Project[]> {
-  const limit = options.limit;
-  const offset = options.offset || 0;
+  const limit = Math.min(100, Math.max(1, Math.floor(options.limit ?? 100)));
+  const offset = Math.max(0, Math.floor(options.offset || 0));
 
   let query = supabase.from(PROJECTS).select('*').order('date', { ascending: false }).order('id', { ascending: false });
 
-  if (limit !== undefined) {
-    query = query.range(offset, offset + limit - 1);
-  }
+  query = query.range(offset, offset + limit - 1);
 
   const { data, error } = await query;
   if (error) throw error;

@@ -17,11 +17,14 @@ import {
 } from '../../../constants';
 import { MobileExpandableExtra } from '../../../components/ui/MobileProgressiveDisclosure';
 import TablePagination from '../../../shared/ui/TablePagination';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { listTeamMembersPaginated } from '../../../services/teamMembers';
 
 interface TeamMemberListProps {
     members: TeamMember[];
     teamProjectPaymentsInDateRange: TeamProjectPayment[];
     groupLabel: 'team' | 'employee' | 'vendor';
+    searchQuery?: string;
     onViewDetails: (member: TeamMember) => void;
     onEditMember: (member: TeamMember) => void;
     onDeleteMember: (memberId: string) => void;
@@ -31,6 +34,7 @@ const TeamMemberList: React.FC<TeamMemberListProps> = ({
     members,
     teamProjectPaymentsInDateRange,
     groupLabel,
+    searchQuery = '',
     onViewDetails,
     onEditMember,
     onDeleteMember,
@@ -56,15 +60,26 @@ const TeamMemberList: React.FC<TeamMemberListProps> = ({
 
     const [currentPage, setCurrentPage] = React.useState(1);
     const [itemsPerPage, setItemsPerPage] = React.useState(10);
+    const queryClient = useQueryClient();
 
     React.useEffect(() => {
         setCurrentPage(1);
-    }, [members.length, groupLabel]);
+    }, [members.length, groupLabel, searchQuery]);
 
-    const paginatedMembers = React.useMemo(() => {
-        const start = (currentPage - 1) * itemsPerPage;
-        return members.slice(start, start + itemsPerPage);
-    }, [members, currentPage, itemsPerPage]);
+    React.useEffect(() => {
+        void queryClient.invalidateQueries({ queryKey: ['teamMembers', 'page'] });
+    }, [members, queryClient]);
+
+    const memberPageQuery = useQuery({
+        queryKey: ['teamMembers', 'page', groupLabel, searchQuery, currentPage, itemsPerPage],
+        queryFn: () => listTeamMembersPaginated(currentPage, itemsPerPage, {
+            category: groupLabel,
+            search: searchQuery,
+        }),
+        placeholderData: previous => previous,
+    });
+    const paginatedMembers = memberPageQuery.data?.teamMembers || [];
+    const memberTotal = memberPageQuery.data?.total || 0;
 
     return (
         <div className="bg-white rounded-2xl shadow-[0_9px_17.5px_rgba(0,0,0,0.05)] border border-slate-200 overflow-hidden transition-all duration-300">
@@ -231,7 +246,7 @@ const TeamMemberList: React.FC<TeamMemberListProps> = ({
                                 </tr>
                             );
                         })}
-                        {members.length === 0 && (
+                        {!memberPageQuery.isLoading && memberTotal === 0 && (
                             <tr>
                                 <td
                                     colSpan={6}
@@ -247,12 +262,12 @@ const TeamMemberList: React.FC<TeamMemberListProps> = ({
 
             <TablePagination
                 currentPage={currentPage}
-                totalItems={members.length}
+                totalItems={memberTotal}
                 itemsPerPage={itemsPerPage}
                 onPageChange={setCurrentPage}
                 onItemsPerPageChange={setItemsPerPage}
                 label={groupLabel === 'vendor' ? 'vendor' : 'anggota tim'}
-                pageSizeOptions={[10, 20]}
+                pageSizeOptions={[10, 20, 50]}
             />
         </div>
     );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
     Project,
     TeamMember,
@@ -37,7 +37,7 @@ import { useProjectForm } from '../../features/projects/hooks/useProjectForm';
 import { useProjectEditMode } from '../../features/projects/hooks/useProjectEditMode';
 import { useProjectOperations } from '../../features/projects/hooks/useProjectOperations';
 import { calculateProjectsModalStats } from '../../features/projects/utils/projectCalculations';
-import { getProjectWithRelations } from '../../services/projects';
+import { getProjectWithRelations, listProjectsPaginated } from '../../services/projects';
 import { createTransaction } from '../../services/transactions';
 import { updatePocket as updatePocketRow } from '../../services/pockets';
 import { updateTeamProjectPayments as updateTeamProjectPaymentsApi } from '../../services/teamProjectPayments';
@@ -151,10 +151,22 @@ export const Projects: React.FC<ProjectsProps> = ({
         setCurrentPage(1);
     }, [searchTerm, dateFrom, dateTo, statusFilter, projectListTab]);
 
-    const paginatedDisplayProjects = useMemo(() => {
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        return displayProjects.slice(startIndex, startIndex + itemsPerPage);
-    }, [displayProjects, currentPage, itemsPerPage]);
+    const projectPageQuery = useQuery({
+        queryKey: ['projects', 'page', currentPage, itemsPerPage, searchTerm, statusFilter, dateFrom, dateTo, projectListTab],
+        queryFn: () => listProjectsPaginated(currentPage, itemsPerPage, searchTerm, {
+            status: statusFilter === 'all' ? undefined : statusFilter,
+            statusGroup: projectListTab === 'all' ? undefined : projectListTab,
+            dateFrom: dateFrom || undefined,
+            dateTo: dateTo || undefined,
+        }),
+        enabled: viewMode === 'list',
+        placeholderData: previous => previous,
+    });
+    useEffect(() => {
+        void queryClient.invalidateQueries({ queryKey: ['projects', 'page'] });
+    }, [projects, queryClient]);
+    const paginatedDisplayProjects = projectPageQuery.data?.projects || [];
+    const projectPageTotal = projectPageQuery.data?.total || 0;
 
     const {
         isBriefingModalOpen,
@@ -684,7 +696,7 @@ export const Projects: React.FC<ProjectsProps> = ({
                             </div>
                             <div className="text-xs text-[#5A6A85] text-right">
                                 Menampilkan <span className="font-bold text-[#2A3547]">
-                                    {displayProjects.length}
+                                    {projectPageTotal}
                                 </span> Acara
                             </div>
                         </div>
@@ -700,12 +712,12 @@ export const Projects: React.FC<ProjectsProps> = ({
                         />
                         <TablePagination
                             currentPage={currentPage}
-                            totalItems={displayProjects.length}
+                            totalItems={projectPageTotal}
                             itemsPerPage={itemsPerPage}
                             onPageChange={setCurrentPage}
                             onItemsPerPageChange={setItemsPerPage}
                             label="acara"
-                            pageSizeOptions={[10, 20]}
+                            pageSizeOptions={[10, 20, 50]}
                         />
                     </div>
                 ) : (

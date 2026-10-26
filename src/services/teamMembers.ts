@@ -84,26 +84,30 @@ export async function listTeamMembers(options: { limit?: number; offset?: number
   return (data || []).map(normalize);
 }
 
-export async function listTeamMembersPaginated(page: number = 1, limit: number = 20): Promise<{
+export async function listTeamMembersPaginated(page: number = 1, limit: number = 10, filters: { search?: string; category?: 'team' | 'employee' | 'vendor' } = {}): Promise<{
   teamMembers: TeamMember[];
   total: number;
   hasMore: boolean;
 }> {
-  const offset = (page - 1) * limit;
-
-  // Get total count
-  const { count, error: countError } = await supabase
+  const pageSize = [10, 20, 50].includes(limit) ? limit : 10;
+  const safePage = Math.max(1, Math.floor(page) || 1);
+  const offset = (safePage - 1) * pageSize;
+  let query = supabase
     .from(TABLE)
-    .select('*', { count: 'exact', head: true });
+    .select('*', { count: 'exact' });
 
-  if (countError) throw countError;
+  if (filters.category === 'employee') query = query.eq('category', 'Karyawan');
+  else if (filters.category === 'vendor') query = query.eq('category', 'Vendor');
+  else if (filters.category === 'team') query = query.or('category.is.null,category.not.in.(Vendor,Karyawan)');
+  if (filters.search?.trim()) {
+    const term = `%${filters.search.trim()}%`;
+    query = query.or(`name.ilike.${term},role.ilike.${term},email.ilike.${term},phone.ilike.${term}`);
+  }
 
-  // Get paginated data
-  const { data, error } = await supabase
-    .from(TABLE)
-    .select('*')
-    .order('id', { ascending: false })
-    .range(offset, offset + limit - 1);
+  const { data, error, count } = await query
+    .order('name', { ascending: true })
+    .order('id', { ascending: true })
+    .range(offset, offset + pageSize - 1);
 
   if (error) throw error;
 
@@ -113,7 +117,7 @@ export async function listTeamMembersPaginated(page: number = 1, limit: number =
   return {
     teamMembers,
     total,
-    hasMore: (page * limit) < total
+    hasMore: (safePage * pageSize) < total
   };
 }
 

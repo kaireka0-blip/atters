@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { FinancialPocket, Transaction, TransactionType } from '../../../types';
 import { formatCurrency } from '../../../utils/currency';
-import { DownloadIcon, PencilIcon, Trash2Icon, ArrowDownIcon } from '../../../constants';
+import { DownloadIcon, PencilIcon, Trash2Icon } from '../../../constants';
 import { SlidersHorizontal, ChevronDown, ChevronUp, Eye, X, FileSpreadsheet } from 'lucide-react';
 import { MobileCollapsibleSection } from '../../../components/ui/MobileProgressiveDisclosure';
 import TablePagination from '../../../shared/ui/TablePagination';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { listTransactionsPaginated } from '../../../services/transactions';
 
 interface CategoryTotals {
     income: { [key: string]: number };
@@ -88,15 +90,31 @@ const TransactionsTab: React.FC<TransactionsTabProps> = ({
     const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
+    const queryClient = useQueryClient();
 
     React.useEffect(() => {
         setCurrentPage(1);
     }, [filters.searchTerm, filters.dateFrom, filters.dateTo, categoryFilter]);
 
-    const paginatedTransactions = React.useMemo(() => {
-        const start = (currentPage - 1) * itemsPerPage;
-        return filteredTransactions.slice(start, start + itemsPerPage);
-    }, [filteredTransactions, currentPage, itemsPerPage]);
+    React.useEffect(() => {
+        void queryClient.invalidateQueries({ queryKey: ['transactions', 'page'] });
+    }, [filteredTransactions, queryClient]);
+
+    const transactionPageQuery = useQuery({
+        queryKey: ['transactions', 'page', currentPage, itemsPerPage, filters.searchTerm, filters.dateFrom, filters.dateTo, categoryFilter],
+        queryFn: () => listTransactionsPaginated(currentPage, itemsPerPage, {
+            search: filters.searchTerm,
+            dateFrom: filters.dateFrom,
+            dateTo: filters.dateTo,
+            type: categoryFilter.type,
+            category: categoryFilter.type !== 'all' && categoryFilter.category !== 'Semua'
+                ? categoryFilter.category
+                : undefined,
+        }),
+        placeholderData: previous => previous,
+    });
+    const paginatedTransactions = transactionPageQuery.data?.transactions || [];
+    const transactionTotal = transactionPageQuery.data?.total || 0;
 
     const allIncomeTotal: number = Object.keys(categoryTotals.income).reduce(
         (sum: number, key: string) => sum + categoryTotals.income[key],
@@ -369,7 +387,7 @@ const TransactionsTab: React.FC<TransactionsTabProps> = ({
                                     </tr>
                                 );
                             })}
-                            {filteredTransactions.length === 0 && (
+                            {!transactionPageQuery.isLoading && transactionTotal === 0 && (
                                 <tr>
                                     <td colSpan={4} className="!px-3 !py-5 text-center !text-[11px] text-[#5A6A85]">Tidak ada transaksi yang cocok.</td>
                                 </tr>
@@ -447,42 +465,20 @@ const TransactionsTab: React.FC<TransactionsTabProps> = ({
                             })}
                         </tbody>
                     </table>
-                    {filteredTransactions.length === 0 && (
+                    {!transactionPageQuery.isLoading && transactionTotal === 0 && (
                         <p className="text-center py-10 text-[#5A6A85] text-sm">Tidak ada transaksi yang cocok.</p>
                     )}
                 </div>
 
                 <TablePagination
                     currentPage={currentPage}
-                    totalItems={filteredTransactions.length}
+                    totalItems={transactionTotal}
                     itemsPerPage={itemsPerPage}
                     onPageChange={setCurrentPage}
                     onItemsPerPageChange={setItemsPerPage}
                     label="transaksi"
-                    pageSizeOptions={[10, 20]}
+                    pageSizeOptions={[10, 20, 50]}
                 />
-
-                {hasMore && filteredTransactions.length >= 10 && (
-                    <div className="mt-6 flex justify-center pb-2">
-                        <button
-                            onClick={loadMoreTransactions}
-                            disabled={isLoadingMore}
-                            className="min-h-[44px] flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-accent hover:bg-brand-accent/90 text-white font-bold text-xs sm:text-sm transition-all disabled:opacity-50"
-                        >
-                            {isLoadingMore ? (
-                                <>
-                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                    Loading...
-                                </>
-                            ) : (
-                                <>
-                                    <ArrowDownIcon className="w-4 h-4" />
-                                    Muat Lebih Banyak
-                                </>
-                            )}
-                        </button>
-                    </div>
-                )}
             </div>
 
             {selectedTransaction && (

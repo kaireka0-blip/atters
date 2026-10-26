@@ -239,6 +239,7 @@ export const Freelancers: React.FC<FreelancersProps> = ({
             members={filters.uniqueTeamMembers}
             teamProjectPaymentsInDateRange={filters.teamProjectPaymentsInDateRange}
             groupLabel="team"
+            searchQuery={filters.teamSearchQuery}
             onViewDetails={members.handleViewDetails}
             onEditMember={(m) => members.handleOpenForm('edit', m)}
             onDeleteMember={members.handleDelete}
@@ -267,6 +268,7 @@ export const Freelancers: React.FC<FreelancersProps> = ({
             members={filters.uniqueEmployeeMembers}
             teamProjectPaymentsInDateRange={filters.teamProjectPaymentsInDateRange}
             groupLabel="employee"
+            searchQuery={filters.employeeSearchQuery}
             onViewDetails={members.handleViewDetails}
             onEditMember={(member) => members.handleOpenForm('edit', member)}
             onDeleteMember={members.handleDelete}
@@ -295,6 +297,7 @@ export const Freelancers: React.FC<FreelancersProps> = ({
             members={filters.uniqueVendorMembers}
             teamProjectPaymentsInDateRange={filters.teamProjectPaymentsInDateRange}
             groupLabel="vendor"
+            searchQuery={filters.vendorSearchQuery}
             onViewDetails={members.handleViewDetails}
             onEditMember={(m) => members.handleOpenForm('edit', m)}
             onDeleteMember={members.handleDelete}

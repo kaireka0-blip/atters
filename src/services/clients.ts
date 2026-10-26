@@ -42,8 +42,8 @@ export async function syncClientStatusFromProjects(clientId: string): Promise<vo
 }
 
 export async function listClients(options: { limit?: number; offset?: number } = {}): Promise<Client[]> {
-  const limit = options.limit || 1000; // Default 1000, effectively all
-  const offset = options.offset || 0
+  const limit = Math.min(100, Math.max(1, Math.floor(options.limit ?? 100)));
+  const offset = Math.max(0, Math.floor(options.offset || 0));
 
   const { data, error } = await supabase
     .from(TABLE)
@@ -58,19 +58,24 @@ export async function listClients(options: { limit?: number; offset?: number } =
 
 export async function listClientsPaginated(
   page: number = 1,
-  limit: number = 20,
+  limit: number = 10,
   searchQuery?: string,
   filters?: {
     status?: string;
     clientType?: string;
+    city?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    sortBy?: 'name' | 'date' | 'status' | 'value';
   }
 ): Promise<{
   clients: Client[];
   total: number;
   hasMore: boolean;
 }> {
-  const pageSize = Math.min(20, Math.max(1, Math.floor(limit) || 20));
-  const offset = (Math.max(1, Math.floor(page) || 1) - 1) * pageSize;
+  const pageSize = [10, 20, 50].includes(limit) ? limit : 10;
+  const safePage = Math.max(1, Math.floor(page) || 1);
+  const offset = (safePage - 1) * pageSize;
 
   // Build query with search and filters
   let query = supabase.from(TABLE).select('*', { count: 'exact' });
@@ -89,12 +94,16 @@ export async function listClientsPaginated(
   if (filters?.clientType) {
     query = query.eq('client_type', filters.clientType);
   }
+  if (filters?.city) query = query.ilike('address', `%${filters.city}%`);
+  if (filters?.dateFrom) query = query.gte('since', filters.dateFrom);
+  if (filters?.dateTo) query = query.lte('since', filters.dateTo);
 
   // Data and exact count arrive in one request; avoid a second full count scan.
-  const { data, error, count } = await query
-    .order('since', { ascending: false })
-    .order('id', { ascending: false })
-    .range(offset, offset + pageSize - 1);
+  if (filters?.sortBy === 'name') query = query.order('name', { ascending: true }).order('id', { ascending: true });
+  else if (filters?.sortBy === 'status') query = query.order('status', { ascending: true }).order('since', { ascending: false }).order('id', { ascending: false });
+  else query = query.order('since', { ascending: false }).order('id', { ascending: false });
+
+  const { data, error, count } = await query.range(offset, offset + pageSize - 1);
 
   if (error) throw error;
 
@@ -104,7 +113,7 @@ export async function listClientsPaginated(
   return {
     clients,
     total,
-    hasMore: (Math.max(1, Math.floor(page) || 1) * pageSize) < total
+    hasMore: safePage * pageSize < total
   };
 }
 

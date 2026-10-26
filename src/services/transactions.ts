@@ -132,8 +132,8 @@ export async function createTransactions(items: Omit<Transaction, 'id' | 'vendor
 }
 
 export async function listTransactions(options: { limit?: number; offset?: number } = {}): Promise<Transaction[]> {
-  const limit = options.limit;
-  const offset = options.offset || 0;
+  const limit = Math.min(100, Math.max(1, Math.floor(options.limit ?? 100)));
+  const offset = Math.max(0, Math.floor(options.offset || 0));
 
   let query = supabase
     .from(TRANSACTIONS)
@@ -141,13 +141,37 @@ export async function listTransactions(options: { limit?: number; offset?: numbe
     .order('date', { ascending: false })
     .order('id', { ascending: false });
 
-  if (limit !== undefined) {
-    query = query.range(offset, offset + limit - 1);
-  }
+  query = query.range(offset, offset + limit - 1);
 
   const { data, error } = await query;
   if (error) throw error;
   return (data || []).map(normalizeTransaction);
+}
+
+export async function listTransactionsPaginated(
+  page = 1,
+  pageSize = 10,
+  filters: { search?: string; dateFrom?: string; dateTo?: string; type?: TransactionType | 'all'; category?: string } = {},
+): Promise<{ transactions: Transaction[]; total: number; hasMore: boolean }> {
+  const size = [10, 20, 50].includes(pageSize) ? pageSize : 10;
+  const safePage = Math.max(1, Math.floor(page) || 1);
+  let query = supabase.from(TRANSACTIONS).select('*', { count: 'exact' });
+  if (filters.search?.trim()) {
+    const term = `%${filters.search.trim()}%`;
+    query = query.or(`description.ilike.${term},category.ilike.${term},method.ilike.${term}`);
+  }
+  if (filters.type && filters.type !== 'all') query = query.eq('type', filters.type);
+  if (filters.category) query = query.eq('category', filters.category);
+  if (filters.dateFrom) query = query.gte('date', filters.dateFrom);
+  if (filters.dateTo) query = query.lte('date', filters.dateTo);
+  const offset = (safePage - 1) * size;
+  const { data, error, count } = await query
+    .order('date', { ascending: false })
+    .order('id', { ascending: false })
+    .range(offset, offset + size - 1);
+  if (error) throw error;
+  const total = count || 0;
+  return { transactions: (data || []).map(normalizeTransaction), total, hasMore: safePage * size < total };
 }
 
 export async function getTransaction(id: string): Promise<Transaction | null> {
