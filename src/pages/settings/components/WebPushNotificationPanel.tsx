@@ -14,6 +14,7 @@ import {
   Laptop,
 } from 'lucide-react';
 import { Profile, User } from '../../../types';
+import LoginActivityPanel from './LoginActivityPanel';
 import {
   isPushSupported,
   isIOS,
@@ -257,6 +258,8 @@ export const WebPushNotificationPanel: React.FC<WebPushNotificationPanelProps> =
           </div>
         )}
       </div>
+
+      <LoginActivityPanel currentUser={currentUser} />
 
       {/* Platform Compatibility & Setup Guide Cards */}
       <div className="bg-brand-surface rounded-2xl border border-brand-border p-5 sm:p-6 space-y-4">

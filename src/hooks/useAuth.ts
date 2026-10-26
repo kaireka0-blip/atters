@@ -5,6 +5,11 @@ import { isSupabaseConfigured, supabase } from "../lib/supabaseClient";
 import { useQueryClient } from "@tanstack/react-query";
 import { restoreQueryCache } from "../lib/queryCachePersistence";
 import { resolveAuthenticatedViewFromHash } from "./useAppRouting";
+import {
+  endCurrentLoginSession,
+  heartbeatCurrentLoginSession,
+  registerCurrentLoginSession,
+} from "../services/loginSessions";
 
 
 
@@ -75,8 +80,39 @@ export function useAuth(): UseAuthReturn {
     );
   }, [currentUser]);
 
+  useEffect(() => {
+    if (!isAuthenticated || !currentUser || !isSupabaseConfigured) return;
+    const syncSession = async () => {
+      try {
+        await registerCurrentLoginSession(currentUser, { notify: false });
+        await heartbeatCurrentLoginSession(currentUser.id);
+      } catch (error) {
+        console.warn('[Login sessions] Could not sync current session:', error);
+      }
+    };
+    const heartbeat = () => {
+      if (document.visibilityState !== 'visible') return;
+      void heartbeatCurrentLoginSession(currentUser.id).catch((error) => {
+        console.warn('[Login sessions] Heartbeat failed:', error);
+      });
+    };
+    void syncSession();
+    heartbeat();
+    const timer = window.setInterval(heartbeat, 30_000);
+    document.addEventListener('visibilitychange', heartbeat);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', heartbeat);
+    };
+  }, [currentUser, isAuthenticated]);
+
 
   const handleLoginSuccess = useCallback(async (user: User) => {
+    try {
+      await registerCurrentLoginSession(user);
+    } catch (error) {
+      console.warn('[Login sessions] Could not record new login:', error);
+    }
     await queryClient.cancelQueries();
     queryClient.clear();
     try {
@@ -109,6 +145,13 @@ export function useAuth(): UseAuthReturn {
   }, [queryClient]);
 
   const handleLogout = useCallback(async () => {
+    if (currentUser) {
+      try {
+        await endCurrentLoginSession(currentUser.id);
+      } catch (e) {
+        console.warn("[Login sessions] Could not close current session:", e);
+      }
+    }
     try {
       await supabase.auth.signOut();
     } catch (e) {
@@ -122,7 +165,7 @@ export function useAuth(): UseAuthReturn {
       window.localStorage.removeItem(LAST_ROUTE_STORAGE_KEY);
     } catch {}
     window.location.hash = "#/home";
-  }, [queryClient]);
+  }, [currentUser, queryClient]);
 
   const hasPermission = useCallback(
     (view: ViewType) => {
