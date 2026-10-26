@@ -91,7 +91,7 @@ serve(async (req: Request) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { vendor_id, user_id, title, message, url, icon, tag } = body;
+    const { vendor_id, user_id, event_type, title, message, url, icon, tag } = body;
 
     // Strict multi-tenant validation: vendor_id is required
     if (!vendor_id) {
@@ -101,7 +101,49 @@ serve(async (req: Request) => {
       );
     }
 
-    // Query active push subscriptions only for this vendor
+    let loginTargetEndpoints: string[] | null = null;
+    if (event_type === "login") {
+      // A login alert can only be sent to other active sessions belonging to
+      // the same authenticated account. Resolve endpoints server-side so a
+      // caller cannot target another account's browser subscriptions.
+      if (!user_id || user_id !== authData.user.id) {
+        return new Response(JSON.stringify({ error: "Login alerts may only target the current account." }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const token = authorization.replace(/^Bearer\s+/i, "").split(".")[1] || "";
+      const normalizedToken = token.replace(/-/g, "+").replace(/_/g, "/");
+      const paddedToken = normalizedToken.padEnd(Math.ceil(normalizedToken.length / 4) * 4, "=");
+      const currentSessionId = token ? JSON.parse(atob(paddedToken)).session_id : null;
+      if (!currentSessionId) {
+        return new Response(JSON.stringify({ error: "Current login session could not be verified." }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: activeEndpoints, error: sessionsError } = await supabase.rpc(
+        "get_active_other_login_push_endpoints",
+        { p_user_id: user_id, p_excluded_session_id: currentSessionId },
+      );
+      if (sessionsError) throw sessionsError;
+      loginTargetEndpoints = [...new Set((activeEndpoints || [])
+        .map((target) => target.endpoint)
+        .filter((endpoint): endpoint is string => Boolean(endpoint)))];
+      if (loginTargetEndpoints.length === 0) {
+        return new Response(JSON.stringify({
+          success: true,
+          message: "No other active sessions with Web Push enabled.",
+          deliveredCount: 0,
+          totalSubscriptions: 0,
+        }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    }
+
+    // Query active push subscriptions only for this vendor. Login alerts are
+    // further restricted to push endpoints stored on other live sessions.
     let query = supabase
       .from("push_subscriptions")
       .select("id, endpoint, p256dh, auth, user_id")
@@ -110,6 +152,9 @@ serve(async (req: Request) => {
 
     if (user_id) {
       query = query.eq("user_id", user_id);
+    }
+    if (loginTargetEndpoints) {
+      query = query.in("endpoint", loginTargetEndpoints);
     }
 
     const { data: subscriptions, error: dbError } = await query;

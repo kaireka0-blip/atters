@@ -44,6 +44,8 @@ export interface PushNotificationPayload {
   vendor_id: string;
   title: string;
   message: string;
+  user_id?: string;
+  event_type?: 'login';
   url?: string;
   icon?: string;
   tag?: string;

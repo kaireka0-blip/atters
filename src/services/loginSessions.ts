@@ -1,6 +1,7 @@
 import { User } from '../types';
 import supabase from '../lib/supabaseClient';
-import { createNotification } from './notifications';
+import { getProfile } from './profile';
+import { dispatchWebPush, getExistingPushSubscription } from './webPush';
 
 const TABLE = 'user_login_sessions';
 const ACTIVE_WINDOW_MS = 2 * 60 * 1000;
@@ -30,6 +31,7 @@ export async function registerCurrentLoginSession(user: User, options: { notify?
   if (!session || session.user.id !== user.id) return;
   const sessionId = getSessionId(session.access_token);
   if (!sessionId) return;
+  const pushSubscription = await getExistingPushSubscription();
 
   const { data, error } = await supabase
     .from(TABLE)
@@ -44,19 +46,54 @@ export async function registerCurrentLoginSession(user: User, options: { notify?
     .maybeSingle();
 
   if (error) throw error;
+  await syncSessionPushEndpoint(sessionId, pushSubscription?.endpoint ?? null);
   if (!data || options.notify === false) return;
 
   try {
-    await createNotification({
-      title: 'Login baru',
-      message: `${user.fullName || user.email} masuk dari ${getDeviceLabel()}.`,
+    const title = 'Login baru';
+    const message = `${user.fullName || user.email} masuk dari ${getDeviceLabel()}.`;
+    const { error: notificationError } = await supabase.from('notifications').insert({
+      title,
+      message,
       timestamp: new Date().toISOString(),
-      isRead: false,
+      is_read: false,
       icon: 'comment',
     });
+    if (notificationError) throw notificationError;
+
+    const profile = await getProfile().catch(() => null);
+    if (profile?.id) {
+      await dispatchWebPush({
+        vendor_id: profile.id,
+        user_id: user.id,
+        event_type: 'login',
+        title,
+        message,
+        url: '/#/Pengaturan',
+        tag: 'attera-admin-login',
+      });
+    }
   } catch (error) {
     console.warn('[Login sessions] Could not create login notification:', error);
   }
+}
+
+export async function syncCurrentSessionPushEndpoint(endpoint: string | null): Promise<void> {
+  const { data: authData } = await supabase.auth.getSession();
+  const session = authData.session;
+  if (!session) return;
+  const sessionId = getSessionId(session.access_token);
+  if (!sessionId) return;
+
+  await syncSessionPushEndpoint(sessionId, endpoint);
+}
+
+async function syncSessionPushEndpoint(sessionId: string, endpoint: string | null): Promise<void> {
+  const { error } = await supabase.rpc('set_login_session_push_endpoint', {
+    p_session_id: sessionId,
+    p_endpoint: endpoint,
+  });
+  if (error) console.warn('[Login sessions] Could not sync push endpoint:', error.message, error.details, error.hint);
 }
 
 export async function heartbeatCurrentLoginSession(userId: string): Promise<void> {

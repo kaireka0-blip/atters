@@ -73,6 +73,9 @@ backups/
 !supabase/migrations/20261016120000_add_lead_sources_to_profiles.sql
 !supabase/migrations/20261023192321_allow_gallery_owner_storage_uploads.sql
 !supabase/migrations/20261026113853_login_session_monitoring.sql
+!supabase/migrations/20261026114756_login_session_push_targets.sql
+!supabase/migrations/20261026115013_private_login_push_targets.sql
+!supabase/migrations/20261026115426_secure_login_push_endpoint_rpc.sql
 !supabase/migrations/20261006175600_bio_link_pages.sql
 !supabase/migrations/20261008090000_allow_projects_without_event_date.sql
 !supabase/migrations/20261008140000_add_vendor_profile_page_banner.sql
