@@ -1088,30 +1088,39 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
     isSaving,
 }) => {
     const [isEditing, setIsEditing] = useState(false);
-    const [draft, setDraft] = useState(value);
+    const legacyGreeting = ['Halo {leadName}!', 'Halo *{clientName}*!', 'Halo *{targetName}*!', 'Halo {clientName}!'].includes(value.trim());
+    const initialDraft = !value.trim() || legacyGreeting ? defaultValue : value;
+    const [draft, setDraft] = useState(initialDraft);
     const savedValue = value.trim();
+    const detailValue = !savedValue || legacyGreeting ? defaultValue : value;
     const preview = savedValue
         ? `✓ Sudah diatur (${savedValue.split(/\r?\n/).length} baris)`
         : 'Belum diatur';
 
     useEffect(() => {
-        if (!isEditing) setDraft(value);
-    }, [isEditing, value]);
+        if (!isEditing) setDraft(initialDraft);
+    }, [isEditing, initialDraft]);
 
     return (
-        <section className="rounded-xl border border-brand-border bg-brand-bg/30 p-3 sm:p-4">
-            <div className="flex items-center justify-between gap-3">
+        <section
+            className="rounded-xl border border-brand-accent/25 p-3 sm:p-4"
+            style={{ backgroundColor: 'color-mix(in srgb, var(--color-accent) 7%, white)' }}
+        >
+            <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                     <h5 className="text-xs sm:text-sm font-semibold text-brand-text-light">{label}</h5>
                     <p className={`mt-1 truncate text-[10px] sm:text-xs ${savedValue ? 'text-green-500' : 'text-brand-text-secondary italic'}`}>
                         {preview}
                     </p>
+                    <div className="mt-2 max-h-24 overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-brand-accent/15 bg-white px-2.5 py-2 text-[10px] leading-relaxed text-brand-text-secondary sm:text-xs">
+                        {detailValue}
+                    </div>
                 </div>
                 <button
                     type="button"
                     aria-expanded={isEditing}
                     onClick={() => setIsEditing(open => !open)}
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-brand-border px-3 py-2 text-xs font-semibold text-brand-text-primary transition-colors hover:bg-brand-bg"
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-brand-accent bg-brand-accent px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-brand-accent-hover"
                 >
                     <PencilIcon className="h-3.5 w-3.5" />
                     {isEditing ? 'Tutup' : 'Edit'}
@@ -1170,6 +1179,7 @@ const toBase64 = (file: File): Promise<string> => new Promise((resolve, reject) 
 const Settings: React.FC<SettingsProps> = ({ profile, setProfile, transactions, projects, packages, setPackages, leads, users, setUsers, currentUser }) => {
     const [activeTab, setActiveTab] = useState('profile');
     const [localProfile, setLocalProfile] = useState<Profile>(profile);
+    const profileSaveLock = useRef(false);
 
     useEffect(() => {
         if (profile) {
@@ -1195,7 +1205,8 @@ const Settings: React.FC<SettingsProps> = ({ profile, setProfile, transactions, 
         | 'portalShareTemplate';
 
     const handleTemplateSave = async (key: TemplateSettingKey, value: string) => {
-        if (isSaving) return;
+        if (profileSaveLock.current || isSaving) return;
+        profileSaveLock.current = true;
         setIsSaving(true);
         setSaveError('');
         try {
@@ -1207,6 +1218,7 @@ const Settings: React.FC<SettingsProps> = ({ profile, setProfile, transactions, 
             console.error(`[Settings] Save ${key} failed:`, err);
             setSaveError(err?.message || 'Gagal menyimpan template.');
         } finally {
+            profileSaveLock.current = false;
             setIsSaving(false);
         }
     };
@@ -1571,7 +1583,8 @@ const Settings: React.FC<SettingsProps> = ({ profile, setProfile, transactions, 
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (isSaving) return;
+        if (profileSaveLock.current || isSaving) return;
+        profileSaveLock.current = true;
         setIsSaving(true);
         setSaveError('');
         try {
@@ -1594,6 +1607,7 @@ const Settings: React.FC<SettingsProps> = ({ profile, setProfile, transactions, 
             console.error('[Settings] Save profile failed:', err);
             setSaveError(err?.message || 'Gagal menyimpan profil.');
         } finally {
+            profileSaveLock.current = false;
             setIsSaving(false);
         }
     }
@@ -1847,6 +1861,7 @@ const Settings: React.FC<SettingsProps> = ({ profile, setProfile, transactions, 
 
     const tabs = [
         { id: 'profile', label: 'Profil Saya', icon: UsersIcon, adminOnly: false },
+        { id: 'chatTemplates', label: 'Template Chat', icon: MessageSquareIcon, adminOnly: false },
         { id: 'webPush', label: 'Notifikasi Web Push', icon: Bell, adminOnly: false },
         { id: 'users', label: 'Pengguna', icon: KeyIcon, adminOnly: true },
         { id: 'categories', label: 'Kustomisasi Kategori', icon: ListIcon, adminOnly: false },
@@ -1857,6 +1872,17 @@ const Settings: React.FC<SettingsProps> = ({ profile, setProfile, transactions, 
 
     const renderTabContent = () => {
         switch (activeTab) {
+            case 'chatTemplates':
+                return (
+                    <ChatTemplateSettings
+                        profile={profile}
+                        setProfile={setProfile}
+                        showSuccess={() => {
+                            setShowSuccess(true);
+                            window.setTimeout(() => setShowSuccess(false), 3000);
+                        }}
+                    />
+                );
             case 'profile':
                 return (
                     <form onSubmit={handleSubmit} className="form-compact form-compact--ios-scale">
@@ -1909,16 +1935,17 @@ const Settings: React.FC<SettingsProps> = ({ profile, setProfile, transactions, 
                             </div>
 
                             <h3 className="text-sm md:text-lg font-semibold text-brand-text-light border-b border-gray-700/50 pb-2 md:pb-3 mt-6 md:mt-8">Branding & Kustomisasi</h3>
-                            <div className="space-y-3 md:space-y-4 max-w-2xl mx-auto">
+                            <div className="space-y-4 md:space-y-5 max-w-2xl mx-auto rounded-2xl border border-brand-accent/20 bg-brand-accent/5 p-3 sm:p-4 md:p-5">
+                                <p className="text-[11px] md:text-xs text-brand-text-secondary">Unggah atau hapus logo dan tanda tangan, lalu simpan perubahan satu kali untuk menerapkannya.</p>
                                 <div>
                                     <label htmlFor="logoUpload" className="text-xs md:text-sm font-medium text-brand-text-secondary">Logo Perusahaan (u/ Invoice)</label>
                                     <div className="mt-2 flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4">
                                         <div className="relative flex-shrink-0">
-                                            {profile.logoBase64 && profile.logoBase64 !== '' ?
-                                                <img src={profile.logoBase64} alt="Logo preview" className="h-12 w-12 md:h-16 md:w-16 object-contain rounded-md bg-brand-bg p-1 border border-brand-border"  loading="lazy" decoding="async" />
+                                            {localProfile.logoBase64 && localProfile.logoBase64 !== '' ?
+                                                <img src={localProfile.logoBase64} alt="Pratinjau logo" className="h-12 w-12 md:h-16 md:w-16 object-contain rounded-md bg-brand-bg p-1 border border-brand-border"  loading="lazy" decoding="async" />
                                                 : <div className="h-12 w-12 md:h-16 md:w-16 rounded-md bg-brand-bg border border-brand-border flex items-center justify-center text-[10px] md:text-xs text-brand-text-secondary">No Logo</div>
                                             }
-                                            {profile.logoBase64 && profile.logoBase64 !== '' && (
+                                            {localProfile.logoBase64 && localProfile.logoBase64 !== '' && (
                                                 <button
                                                     type="button"
                                                     onClick={handleRemoveLogo}
@@ -1943,11 +1970,11 @@ const Settings: React.FC<SettingsProps> = ({ profile, setProfile, transactions, 
                                     <label htmlFor="signatureUpload" className="text-xs md:text-sm font-medium text-brand-text-secondary">Tanda Tangan (TTD) - untuk Invoice, Kontrak, Pembayaran tim</label>
                                     <div className="mt-2 flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-4">
                                         <div className="relative flex-shrink-0">
-                                            {profile.signatureBase64 && profile.signatureBase64 !== '' ?
-                                                <img src={profile.signatureBase64} alt="TTD preview" className="h-16 w-24 md:h-20 md:w-32 object-contain rounded-md bg-white p-1 border border-brand-border"  loading="lazy" decoding="async" />
+                                            {localProfile.signatureBase64 && localProfile.signatureBase64 !== '' ?
+                                                <img src={localProfile.signatureBase64} alt="Pratinjau tanda tangan" className="h-16 w-24 md:h-20 md:w-32 object-contain rounded-md bg-white p-1 border border-brand-border"  loading="lazy" decoding="async" />
                                                 : <div className="h-16 w-24 md:h-20 md:w-32 rounded-md bg-brand-bg border border-brand-border flex items-center justify-center text-[10px] md:text-xs text-brand-text-secondary text-center px-1">Belum Upload TTD</div>
                                             }
-                                            {profile.signatureBase64 && profile.signatureBase64 !== '' && (
+                                            {localProfile.signatureBase64 && localProfile.signatureBase64 !== '' && (
                                                 <button
                                                     type="button"
                                                     onClick={handleRemoveSignature}
