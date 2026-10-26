@@ -106,6 +106,7 @@ export const useClientFormHandler = ({
             const additionalPackageIds: string[] = [];
             const storedAddOnPrices: Record<string, number> = {};
             const storedAdditionalPackagePrices: Record<string, number> = {};
+            const storedAdditionalPackageDurations: Record<string, string> = {};
             const customItemsList: CustomFormItem[] = [];
             const mainPackageId = freshProject?.packageId || packages.find(
                 item => item.name?.toLowerCase().trim() === freshProject?.packageName?.toLowerCase().trim()
@@ -125,6 +126,7 @@ export const useClientFormHandler = ({
                 if (packageItem.id) {
                     additionalPackageIds.push(packageItem.id);
                     storedAdditionalPackagePrices[packageItem.id] = Number(packageItem.price) || 0;
+                    if (packageItem.durationSelection) storedAdditionalPackageDurations[packageItem.id] = packageItem.durationSelection;
                 }
             });
             if (freshProject?.addOns && Array.isArray(freshProject.addOns)) {
@@ -139,6 +141,7 @@ export const useClientFormHandler = ({
                     if (matchedPkg && matchedPkg.id !== mainPackageId) {
                         if (!additionalPackageIds.includes(matchedPkg.id)) additionalPackageIds.push(matchedPkg.id);
                         storedAdditionalPackagePrices[matchedPkg.id] = Number(a.price ?? matchedPkg.price) || 0;
+                        if (a.durationSelection) storedAdditionalPackageDurations[matchedPkg.id] = a.durationSelection;
                     } else if (matchedStd) {
                         standardAddOnIds.push(matchedStd.id);
                         storedAddOnPrices[matchedStd.id] = Number(a.price ?? matchedStd.price) || 0;
@@ -214,6 +217,7 @@ export const useClientFormHandler = ({
                 packageId: resolvedPackageId,
                 selectedAdditionalPackageIds: additionalPackageIds,
                 selectedAdditionalPackagePriceOverrides: storedAdditionalPackagePrices,
+                selectedAdditionalPackageDurationSelections: storedAdditionalPackageDurations,
                 selectedAddOnIds: standardAddOnIds,
                 selectedAddOnPriceOverrides: storedAddOnPrices,
                 customItems: customItemsList,
@@ -355,7 +359,18 @@ export const useClientFormHandler = ({
 
         const selectedAdditionalPackages = packages.filter(p => formData.selectedAdditionalPackageIds?.includes(p.id));
         const selectedAddOns = addOns.filter(addon => formData.selectedAddOnIds.includes(addon.id));
-        const additionalPackageRecords = selectedAdditionalPackages.map(pkg => ({ id: pkg.id, name: pkg.name, price: pkg.price }));
+        const additionalPackageRecords = selectedAdditionalPackages.map(pkg => {
+            const durationSelection = formData.selectedAdditionalPackageDurationSelections?.[pkg.id]
+                || pkg.durationOptions?.find(option => option.default)?.label
+                || pkg.durationOptions?.[0]?.label;
+            const durationOption = pkg.durationOptions?.find(option => option.label === durationSelection);
+            return {
+                id: pkg.id,
+                name: pkg.name,
+                price: formData.selectedAdditionalPackagePriceOverrides?.[pkg.id] ?? durationOption?.price ?? pkg.price,
+                ...(durationSelection ? { durationSelection } : {}),
+            };
+        });
         const customItems = (formData.customItems || []).map(ci => ({
             id: ci.id,
             name: ci.name.trim(),
@@ -372,7 +387,7 @@ export const useClientFormHandler = ({
                 : selectedPackage?.price || 0;
         const totalAddOnsPrice =
             selectedAddOns.reduce((sum, addon) => sum + addon.price, 0) +
-            selectedAdditionalPackages.reduce((sum, pkg) => sum + pkg.price, 0) +
+            additionalPackageRecords.reduce((sum, pkg) => sum + pkg.price, 0) +
             customItems.reduce((sum, item) => sum + item.price, 0);
         const totalBeforeDiscount = packagePriceChosen + totalAddOnsPrice;
         let finalDiscountAmount = 0;
@@ -647,7 +662,16 @@ export const useClientFormHandler = ({
             const additionalPackageRecords = selectedAdditionalPackages.map(pkg => ({
                 id: pkg.id,
                 name: pkg.name,
-                price: formData.selectedAdditionalPackagePriceOverrides?.[pkg.id] ?? pkg.price,
+                price: formData.selectedAdditionalPackagePriceOverrides?.[pkg.id]
+                    ?? pkg.durationOptions?.find(option => option.label === formData.selectedAdditionalPackageDurationSelections?.[pkg.id])?.price
+                    ?? pkg.durationOptions?.find(option => option.default)?.price
+                    ?? pkg.durationOptions?.[0]?.price
+                    ?? pkg.price,
+                ...(formData.selectedAdditionalPackageDurationSelections?.[pkg.id]
+                    ? { durationSelection: formData.selectedAdditionalPackageDurationSelections[pkg.id] }
+                    : pkg.durationOptions?.length
+                        ? { durationSelection: (pkg.durationOptions.find(option => option.default) || pkg.durationOptions[0]).label }
+                        : {}),
             }));
             const customItems = (formData.customItems || []).map(ci => ({
                 id: ci.id,
@@ -674,7 +698,7 @@ export const useClientFormHandler = ({
 
             const totalAddOnsPrice =
                 selectedAddOns.reduce((sum, addon) => sum + (formData.selectedAddOnPriceOverrides?.[addon.id] ?? addon.price), 0) +
-                selectedAdditionalPackages.reduce((sum, pkg) => sum + (formData.selectedAdditionalPackagePriceOverrides?.[pkg.id] ?? pkg.price), 0) +
+                additionalPackageRecords.reduce((sum, pkg) => sum + pkg.price, 0) +
                 customItems.reduce((sum, item) => sum + item.price, 0) +
                 (Number(formData.preservedProjectExtras) || 0);
 

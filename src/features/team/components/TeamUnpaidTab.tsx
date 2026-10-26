@@ -11,6 +11,7 @@ import { TeamMember, TeamProjectPayment, Project } from '../../../types';
 import { ModernStatCard } from '../../../components/modernize/ModernStatCard';
 import { formatCurrency } from '../utils/teamUtils';
 import { AlertCircleIcon, CalendarIcon, UsersIcon, EyeIcon } from '../../../constants';
+import { customizeUiText, useUiTextOverrides } from '../../../utils/uiTextCustomization';
 
 interface UnpaidPaymentItem {
     payment: TeamProjectPayment;
@@ -35,6 +36,8 @@ const TeamUnpaidTab: React.FC<TeamUnpaidTabProps> = ({
     onSearchChange,
     onViewDetails,
 }) => {
+    const textOverrides = useUiTextOverrides();
+    const text = (key: string, fallback: string) => customizeUiText(`table.team.${key}`, fallback, textOverrides);
     const uniqueWaitingCount = new Set(
         allUnpaidPayments.map(i => i.member?.id).filter(Boolean),
     ).size;
@@ -160,13 +163,13 @@ const TeamUnpaidTab: React.FC<TeamUnpaidTabProps> = ({
                             <table className="w-full text-sm border-collapse">
                                 <thead className="text-xs text-[#5A6A85] font-bold uppercase bg-[#F8FAFC] border-b border-slate-200">
                                     <tr>
-                                        <th className="px-4 py-3.5 text-center w-12 border-r border-slate-200/70">No</th>
-                                        <th className="px-4 py-3.5 text-left border-r border-slate-200/70">Nama Penerima</th>
-                                        <th className="px-4 py-3.5 text-left border-r border-slate-200/70">Kategori</th>
-                                        <th className="px-4 py-3.5 text-left border-r border-slate-200/70">Peran / Tugas</th>
-                                        <th className="px-4 py-3.5 text-left border-r border-slate-200/70">Acara Pernikahan</th>
-                                        <th className="px-4 py-3.5 text-right border-r border-slate-200/70">Nominal Pembayaran</th>
-                                        <th className="px-4 py-3.5 text-center">Aksi</th>
+                                        <th className="px-4 py-3.5 text-center w-12 border-r border-slate-200/70">{text('number', 'No')}</th>
+                                        <th className="px-4 py-3.5 text-left border-r border-slate-200/70">{text('name', 'Nama Penerima')}</th>
+                                        <th className="px-4 py-3.5 text-left border-r border-slate-200/70">{text('category', 'Kategori')}</th>
+                                        <th className="px-4 py-3.5 text-left border-r border-slate-200/70">{text('role', 'Peran / Tugas')}</th>
+                                        <th className="px-4 py-3.5 text-left border-r border-slate-200/70">{text('event', 'Acara Pernikahan')}</th>
+                                        <th className="px-4 py-3.5 text-right border-r border-slate-200/70">{text('amount', 'Nominal Pembayaran')}</th>
+                                        <th className="px-4 py-3.5 text-center">{text('actions', 'Aksi')}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-200 bg-white">

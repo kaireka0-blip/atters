@@ -1,11 +1,15 @@
 import React from 'react';
-import { Profile, Project, Transaction, TransactionType } from '../../../types';
+import { Card, Profile, Project, Transaction, TransactionType } from '../../../types';
 import { formatCurrency } from '../../../utils/currency';
-import { DownloadIcon, PrinterIcon } from '../../../constants';
+import { DownloadIcon } from '../../../constants';
 import ClientProfitabilityReport from './ClientProfitabilityReport';
 import GeneralFinancialReport from './GeneralFinancialReport';
 import type { GeneralFinancialReportMetrics } from './GeneralFinancialReport';
 import { MobileCollapsibleSection } from '../../../components/ui/MobileProgressiveDisclosure';
+import FinancialDetailReports from './FinancialDetailReports';
+import EventProfitabilityTab from './EventProfitabilityTab';
+
+export type FinanceReportView = 'all' | 'overview' | 'clients' | 'categories' | 'balance';
 
 export const PRODUCTION_COST_CATEGORIES = [
     "Gaji Tim / Vendor",
@@ -37,15 +41,24 @@ interface ClientOption {
 }
 
 interface FinanceReportsTabProps {
+    reportView?: FinanceReportView;
     reportFilters: ReportFilters;
     setReportFilters: React.Dispatch<React.SetStateAction<ReportFilters>>;
     reportClientOptions: ClientOption[];
-    handleDownloadReportCSV: () => void;
     handleDownloadReportExcel: () => void;
+    handleDownloadReportPDF: () => void;
+    isExportingReportPDF?: boolean;
     generalReportMetrics: GeneralFinancialReportMetrics | null;
     reportTransactions: Transaction[];
     profile: Profile;
     projects: Project[];
+    cards?: Card[];
+    profitReportFilters?: { year: number; month: number };
+    setProfitReportFilters?: React.Dispatch<React.SetStateAction<{ year: number; month: number }>>;
+    profitReportMetrics?: { totalProfit: number; avgProfit: number; mostProfitableClient: string; profitableProjectsCount: number };
+    projectProfitabilityData?: any[];
+    handleDownloadProfitReportCSV?: () => void;
+    handleDownloadProfitReportExcel?: () => void;
     onEditTransaction?: (transaction: Transaction) => void;
     onDeleteTransaction?: (id: string) => void;
     onAddTransaction?: () => void;
@@ -90,22 +103,41 @@ const MobileTransactionsTable: React.FC<{ transactions: Transaction[] }> = ({ tr
 );
 
 const FinanceReportsTab: React.FC<FinanceReportsTabProps> = ({
+    reportView = 'overview',
     reportFilters,
     setReportFilters,
     reportClientOptions,
-    handleDownloadReportCSV,
     handleDownloadReportExcel,
+    handleDownloadReportPDF,
+    isExportingReportPDF = false,
     generalReportMetrics,
     reportTransactions,
     profile,
     projects,
+    cards = [],
+    profitReportFilters,
+    setProfitReportFilters,
+    profitReportMetrics,
+    projectProfitabilityData = [],
+    handleDownloadProfitReportCSV,
+    handleDownloadProfitReportExcel,
     onEditTransaction,
     onDeleteTransaction,
     onAddTransaction,
 }) => {
+    const [activeReportSection, setActiveReportSection] = React.useState<'overview' | 'clients' | 'categories' | 'balance' | 'event'>('overview');
+    const reportSections = [
+        { id: 'overview', label: 'Umum' },
+        { id: 'clients', label: 'Per Pengantin' },
+        { id: 'categories', label: 'Per Kategori' },
+        { id: 'balance', label: 'Neraca' },
+    ] as const;
+    const showTransactionFilters = reportView !== 'balance'
+        && !(reportView === 'all' && (activeReportSection === 'balance' || activeReportSection === 'event'));
+
     return (
         <div className="space-y-4 sm:space-y-6 printable-area widget-animate">
-            <MobileCollapsibleSection
+            {showTransactionFilters && <MobileCollapsibleSection
                 title="Filter & Ekspor Laporan"
                 subtitle={reportFilters.client === 'all' ? 'Semua Pengantin' : 'Pengantin Terpilih'}
                 variant="filter"
@@ -146,27 +178,41 @@ const FinanceReportsTab: React.FC<FinanceReportsTabProps> = ({
                     </div>
                     <div className="flex items-center gap-2 w-full md:w-auto md:ml-auto">
                         <button
-                            onClick={handleDownloadReportCSV}
-                            className="button-secondary inline-flex items-center justify-center gap-2 flex-1 md:flex-none min-h-[40px] text-xs sm:text-sm font-semibold"
-                        >
-                            <DownloadIcon className="w-4 h-4 flex-shrink-0" />Unduh CSV
-                        </button>
-                        <button
                             onClick={handleDownloadReportExcel}
                             className="button-secondary inline-flex items-center justify-center gap-2 flex-1 md:flex-none min-h-[40px] text-xs sm:text-sm font-semibold"
                         >
                             <DownloadIcon className="w-4 h-4 flex-shrink-0" />Unduh Excel
                         </button>
                         <button
-                            onClick={() => window.print()}
+                            onClick={handleDownloadReportPDF}
+                            disabled={isExportingReportPDF}
                             className="button-primary inline-flex items-center justify-center gap-2 flex-1 md:flex-none min-h-[40px] text-xs sm:text-sm font-semibold"
                         >
-                            <PrinterIcon className="w-4 h-4 flex-shrink-0" />Cetak PDF
+                            <DownloadIcon className="w-4 h-4 flex-shrink-0" />{isExportingReportPDF ? 'Menyiapkan PDF...' : 'Unduh PDF'}
                         </button>
                     </div>
                 </div>
-            </MobileCollapsibleSection>
+            </MobileCollapsibleSection>}
 
+            {reportView === 'all' && <div className="scrollbar-hide flex w-full flex-nowrap gap-1 overflow-x-auto rounded-xl border border-brand-border bg-white p-1.5 sm:flex-wrap sm:gap-2 sm:p-2" role="tablist" aria-label="Tab laporan keuangan">
+                {reportSections.map(section => <button
+                    key={section.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeReportSection === section.id}
+                    onClick={() => setActiveReportSection(section.id)}
+                    className={`min-h-10 shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-xs font-bold transition-colors sm:px-4 ${activeReportSection === section.id ? 'bg-brand-accent text-white shadow-sm' : 'text-brand-text-secondary hover:bg-brand-bg'}`}
+                >{section.label}</button>)}
+            </div>}
+
+            {reportView !== 'overview' && reportView !== 'all' ? (
+                <FinancialDetailReports
+                    view={reportView}
+                    transactions={reportTransactions}
+                    projects={projects}
+                    cards={cards}
+                />
+            ) : reportView === 'overview' || activeReportSection === 'overview' ? <>
             {/* Mobile simple report */}
             <div className="md:hidden space-y-3">
                 {generalReportMetrics && reportFilters.client === 'all' && (
@@ -247,6 +293,23 @@ const FinanceReportsTab: React.FC<FinanceReportsTabProps> = ({
                     </div>
                 )
             )}
+            </> : null}
+            {reportView === 'all' && activeReportSection !== 'overview' && activeReportSection !== 'event' && <FinancialDetailReports
+                view={activeReportSection}
+                transactions={reportTransactions}
+                projects={projects}
+                cards={cards}
+            />}
+            {reportView === 'all' && activeReportSection === 'event' && profitReportFilters && setProfitReportFilters && profitReportMetrics && handleDownloadProfitReportCSV && handleDownloadProfitReportExcel && <EventProfitabilityTab
+                    profitReportFilters={profitReportFilters}
+                    setProfitReportFilters={setProfitReportFilters}
+                    profitReportMetrics={profitReportMetrics}
+                    projectProfitabilityData={projectProfitabilityData}
+                    projects={projects}
+                    profile={profile}
+                    handleDownloadProfitReportCSV={handleDownloadProfitReportCSV}
+                    handleDownloadProfitReportExcel={handleDownloadProfitReportExcel}
+                />}
         </div>
     );
 };

@@ -4,6 +4,7 @@ import { VendorPortfolio } from '../../types';
 import { getVendorPortfolio } from '../../services/vendorPortfolios';
 import { getVendorProfile } from '../../services/vendorProfile';
 import { useSupabaseRealtimeRefresh } from '../../hooks/useSupabaseRealtimeRefresh';
+import { customizeUiText, useUiTextOverrides } from '../../utils/uiTextCustomization';
 
 const PORTFOLIO_IMAGE_FALLBACK = '/assets/images/backgrounds/portal-pengantin-3.jpg';
 
@@ -18,6 +19,8 @@ const handlePortfolioImageError = (event: React.SyntheticEvent<HTMLImageElement>
 };
 
 const PortfolioDetailPage: React.FC = () => {
+    const uiTextOverrides = useUiTextOverrides();
+    const text = (key: string, fallback: string) => customizeUiText(`public.portfolio.${key}`, fallback, uiTextOverrides);
     const [portfolio, setPortfolio] = useState<VendorPortfolio | null>(null);
     const [vendorName, setVendorName] = useState('');
     const [waNumber, setWaNumber] = useState('');
@@ -94,7 +97,7 @@ const PortfolioDetailPage: React.FC = () => {
             <div className="min-h-screen flex items-center justify-center bg-[#f7f4f0]">
                 <div className="text-center">
                     <p className="text-gray-400 text-xl font-light mb-6">Portfolio tidak ditemukan</p>
-                    <a href="#/profile" className="text-sm text-[#c9a87c] underline">← Kembali ke Profil</a>
+                    <a href="#/profile" className="text-sm text-[#c9a87c] underline">← {text('back', 'Kembali ke Profil')}</a>
                 </div>
             </div>
         );
@@ -231,7 +234,7 @@ const PortfolioDetailPage: React.FC = () => {
                         style={{ fontFamily: 'Montserrat, sans-serif' }}>
                         Suka dengan karya ini?
                     </p>
-                    <h2 className="text-3xl md:text-4xl font-light text-[#3d2e22] mb-8">Hubungi Kami</h2>
+                    <h2 className="text-3xl md:text-4xl font-light text-[#3d2e22] mb-8">{text('contact', 'Hubungi Kami')}</h2>
                     <a
                         href={formatWa(waNumber)}
                         target="_blank"

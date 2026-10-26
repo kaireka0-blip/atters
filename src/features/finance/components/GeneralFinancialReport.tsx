@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Transaction, Profile } from '../../../types';
 import StatCard from '../../../shared/ui/StatCard';
 import { AnalyticsChartCard } from '../../../shared/ui/AnalyticsChartCard';
@@ -27,6 +27,28 @@ interface GeneralFinancialReportProps {
 const CategoryAnalysisContent: React.FC<{ data: { label: string; value: number; color: string }[] }> = ({ data }) => (
     <CategoryBarChart data={data} />
 );
+
+const ExpenseCategoryAnalysis: React.FC<{ data: { label: string; value: number; color: string }[] }> = ({ data }) => {
+    const [showAll, setShowAll] = useState(false);
+    const sortedData = data.slice().sort((a, b) => b.value - a.value);
+    const visibleData = showAll ? sortedData : sortedData.slice(0, 3);
+
+    return (
+        <AnalyticsChartCard title="Analisis Pengeluaran" description={showAll ? 'Semua kategori, diurutkan dari nominal terbesar' : '3 kategori pengeluaran terbesar'}>
+            <CategoryAnalysisContent data={visibleData} />
+            {sortedData.length > 3 && (
+                <button
+                    type="button"
+                    onClick={() => setShowAll(value => !value)}
+                    aria-expanded={showAll}
+                    className="mt-3 min-h-9 rounded-lg border border-brand-border px-3 text-xs font-semibold text-brand-accent transition-colors hover:bg-brand-accent/5"
+                >
+                    {showAll ? 'Tampilkan 3 kategori' : `Lihat semua kategori (${sortedData.length})`}
+                </button>
+            )}
+        </AnalyticsChartCard>
+    );
+};
 
 const GeneralFinancialReport: React.FC<GeneralFinancialReportProps> = ({
     metrics,
@@ -62,9 +84,7 @@ const GeneralFinancialReport: React.FC<GeneralFinancialReportProps> = ({
             <AnalyticsChartCard title="Analisis Pemasukan" description="Distribusi pemasukan berdasarkan kategori">
                 <CategoryAnalysisContent data={metrics.incomeDonut} />
             </AnalyticsChartCard>
-            <AnalyticsChartCard title="Analisis Pengeluaran" description="Distribusi pengeluaran berdasarkan kategori">
-                <CategoryAnalysisContent data={metrics.expenseDonut} />
-            </AnalyticsChartCard>
+            <ExpenseCategoryAnalysis data={metrics.expenseDonut} />
         </div>
         
         <div className="bg-brand-surface p-6 rounded-2xl shadow-lg mt-6 border border-brand-border">

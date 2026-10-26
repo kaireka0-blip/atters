@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import { Lead, LeadStatus, ContactChannel } from '../../../types';
 import { createSuggestion } from '../../../services/suggestions';
 import { generateUUID } from '../../../utils/uuid';
+import { customizeUiText, useUiTextOverrides } from '../../../utils/uiTextCustomization';
 
 interface SuggestionFormProps {
     setLeads: React.Dispatch<React.SetStateAction<Lead[]>>;
 }
 
 const SuggestionForm: React.FC<SuggestionFormProps> = ({ setLeads }) => {
+    const uiTextOverrides = useUiTextOverrides();
+    const text = (key: string, fallback: string) => customizeUiText(`public.suggestion.${key}`, fallback, uiTextOverrides);
     const [name, setName] = useState('');
     const [contact, setContact] = useState('');
     const [message, setMessage] = useState('');
@@ -81,7 +84,7 @@ const SuggestionForm: React.FC<SuggestionFormProps> = ({ setLeads }) => {
                      <div className="flex justify-center">
                         <Logo />
                     </div>
-                    <h1 className="text-2xl font-bold text-brand-text-light">Formulir Saran & Masukan</h1>
+                    <h1 className="text-2xl font-bold text-brand-text-light">{text('title', 'Formulir Saran & Masukan')}</h1>
                     <p className="text-sm text-brand-text-secondary">Punya ide atau pertanyaan untuk Vena Pictures? Kami ingin mendengarnya dari Anda!</p>
                 </div>
 
@@ -132,7 +135,7 @@ const SuggestionForm: React.FC<SuggestionFormProps> = ({ setLeads }) => {
                             disabled={isSubmitting}
                             className="w-full button-primary"
                         >
-                            {isSubmitting ? 'Mengirim...' : 'Kirim Masukan'}
+                            {isSubmitting ? 'Mengirim...' : text('submit', 'Kirim Masukan')}
                         </button>
                     </div>
                 </form>

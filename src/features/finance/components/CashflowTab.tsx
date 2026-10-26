@@ -6,6 +6,7 @@ import { formatCurrency } from '../../../utils/currency';
 import { DollarSignIcon, TrendingUpIcon, TrendingDownIcon } from '../../../constants';
 import { Calendar, Shield } from 'lucide-react';
 import CategoryBarChart from './CategoryBarChart';
+import { customizeUiText, useUiTextOverrides } from '../../../utils/uiTextCustomization';
 
 interface CashflowMetrics {
     runway: string;
@@ -35,24 +36,26 @@ const CashflowTab: React.FC<CashflowTabProps> = ({
     projectionMonths = 6,
     onProjectionMonthsChange
 }) => {
+    const uiTextOverrides = useUiTextOverrides();
+    const tableText = (key: string, fallback: string) => customizeUiText(`table.cashflow.${key}`, fallback, uiTextOverrides);
     return (
         <div className="space-y-6">
             {/* Top Stat Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 md:gap-5">
                 <ModernStatCard
                     icon={<Shield className="w-5 h-5" />}
-                    title="Ketahanan Kas (Runway)"
+                    title="Perkiraan Daya Tahan Kas"
                     value={cashflowMetrics.runway}
-                    subtitle={`Burn Rate: ${formatCurrency(cashflowMetrics.burnRate)}/bln`}
+                    subtitle={`Defisit bersih per bulan · 6 bulan terakhir: ${formatCurrency(cashflowMetrics.burnRate)}`}
                     iconColorVariant="warning"
                     compactOnMobile
                 />
                 <ModernStatCard
                     icon={<DollarSignIcon className="w-5 h-5" />}
-                    title="Laba/Rugi Historis"
+                    title="Selisih Pemasukan & Pengeluaran"
                     value={formatCurrency(filteredSummary.net)}
                     valueClassName={filteredSummary.net >= 0 ? '!text-[#166534]' : '!text-[#DC2626]'}
-                    subtitle="Berdasarkan transaksi tercatat"
+                    subtitle="Berdasarkan transaksi dan filter yang dipilih"
                     iconColorVariant="primary"
                     compactOnMobile
                 />
@@ -81,10 +84,10 @@ const CashflowTab: React.FC<CashflowTabProps> = ({
                 <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
                     <div>
                         <h4 className="text-sm sm:text-base md:text-lg font-bold text-[#2A3547] flex items-center gap-2">
-                            Grafik Arus Kas & Proyeksi Berbasis Data
+                            Grafik Arus Kas dan Perkiraan Saldo
                         </h4>
                         <p className="text-xs text-[#5A6A85] mt-0.5">
-                            Berdasarkan transaksi tercatat dan sisa pembayaran pada acara yang akan datang.
+                            Bagian garis putus-putus menunjukkan perkiraan, termasuk sisa pembayaran acara yang akan datang.
                         </p>
                     </div>
                 </div>
@@ -112,11 +115,14 @@ const CashflowTab: React.FC<CashflowTabProps> = ({
             <div className="bg-white p-3 sm:p-5 md:p-6 rounded-2xl shadow-[0_9px_17.5px_rgba(0,0,0,0.05)] border border-[#EAEFF4]">
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                     <div>
-                        <h4 className="text-sm font-bold text-[#2A3547] uppercase tracking-wider">
-                            Rincian Arus Kas & Proyeksi Bulanan
+                        <h4 className="text-sm font-bold text-[#2A3547]">
+                            Ringkasan Arus Kas Bulanan
                         </h4>
                         <p className="text-xs text-[#5A6A85] mt-0.5">
-                            Data historis berpadu dengan estimasi tren masa depan untuk perencanaan anggaran.
+                            Bulan aktual memakai transaksi tercatat. Bulan perkiraan adalah estimasi, bukan angka pasti.
+                        </p>
+                        <p className="mt-2 rounded-lg bg-blue-50 px-3 py-2 text-[11px] leading-relaxed text-blue-900">
+                            <strong>Selisih bulan ini</strong> = pemasukan − pengeluaran. <strong>Perkiraan saldo akhir</strong> = saldo bulan sebelumnya + selisih bulan ini.
                         </p>
                     </div>
                 </div>
@@ -124,13 +130,13 @@ const CashflowTab: React.FC<CashflowTabProps> = ({
                     <table className="w-full text-xs lg:text-sm">
                         <thead className="text-xs text-[#5A6A85] uppercase bg-[#F4F6F9]/80 border-b border-[#EAEFF4] sticky top-0 z-10">
                             <tr className="text-[#5A6A85]">
-                                <th className="p-3 font-bold text-center w-12">No</th>
-                                <th className="p-3 font-bold text-left">Periode</th>
-                                <th className="p-3 font-bold text-center">Tipe</th>
-                                <th className="p-3 font-bold text-right">Pemasukan</th>
-                                <th className="p-3 font-bold text-right">Pengeluaran</th>
-                                <th className="p-3 font-bold text-right">Net Arus Kas</th>
-                                <th className="p-3 font-bold text-right">Saldo Kumulatif</th>
+                                <th className="p-3 font-bold text-center w-12">{tableText('number', 'No')}</th>
+                                <th className="p-3 font-bold text-left">{tableText('period', 'Periode')}</th>
+                                <th className="p-3 font-bold text-center">{tableText('type', 'Tipe')}</th>
+                                <th className="p-3 font-bold text-right">{tableText('income', 'Pemasukan')}</th>
+                                <th className="p-3 font-bold text-right">{tableText('expense', 'Pengeluaran')}</th>
+                                <th className="p-3 font-bold text-right">{tableText('net', 'Selisih Bulan Ini')}</th>
+                                <th className="p-3 font-bold text-right">{tableText('balance', 'Perkiraan Saldo Akhir')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[#EAEFF4]">
@@ -158,7 +164,7 @@ const CashflowTab: React.FC<CashflowTabProps> = ({
                                             {d.isProjected ? (
                                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-accent text-white">
                                                     <Calendar className="w-2.5 h-2.5" />
-                                                    Proyeksi
+                                                    Perkiraan
                                                 </span>
                                             ) : (
                                                 <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#F4F6F9] text-[#5A6A85]">

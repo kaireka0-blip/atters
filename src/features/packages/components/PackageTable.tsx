@@ -47,7 +47,7 @@ export const PackageTable: React.FC<PackageTableProps> = ({
                     <thead>
                         <tr className="bg-[#F4F6F9] border-b border-[#EAEFF4]">
                             <th className="py-3.5 px-4 text-[11px] font-bold uppercase tracking-wider text-[#5A6A85] w-12 text-center">
-                                No
+                                {text('number', 'No')}
                             </th>
                             <th className="py-3.5 px-4 text-[11px] font-bold uppercase tracking-wider text-[#5A6A85]">
                                 {text('name', 'Nama Paket')}

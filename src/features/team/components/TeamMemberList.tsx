@@ -19,6 +19,7 @@ import { MobileExpandableExtra } from '../../../components/ui/MobileProgressiveD
 import TablePagination from '../../../shared/ui/TablePagination';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { listTeamMembersPaginated } from '../../../services/teamMembers';
+import { customizeUiText, useUiTextOverrides } from '../../../utils/uiTextCustomization';
 
 interface TeamMemberListProps {
     members: TeamMember[];
@@ -39,6 +40,8 @@ const TeamMemberList: React.FC<TeamMemberListProps> = ({
     onEditMember,
     onDeleteMember,
 }) => {
+    const textOverrides = useUiTextOverrides();
+    const text = (key: string, fallback: string) => customizeUiText(`table.team.${key}`, fallback, textOverrides);
     const currentTeamPayments = dedupeCurrentTeamPayments(teamProjectPaymentsInDateRange);
     const getUnpaidFee = (memberId: string) =>
         currentTeamPayments
@@ -175,12 +178,12 @@ const TeamMemberList: React.FC<TeamMemberListProps> = ({
                 <table className="w-full text-xs lg:text-sm border-collapse">
                     <thead className="text-[11px] lg:text-xs text-[#5A6A85] font-bold uppercase bg-[#F8FAFC] border-b border-slate-200">
                         <tr>
-                            <th className="px-3 lg:px-4 py-3.5 text-center w-10 lg:w-14 border-r border-slate-200/70">No</th>
-                            <th className="px-3 lg:px-4 py-3.5 text-left border-r border-slate-200/70">{nameHeader}</th>
-                            <th className="px-3 lg:px-4 py-3.5 text-left border-r border-slate-200/70">{roleHeader}</th>
-                            <th className="px-3 lg:px-4 py-3.5 text-left border-r border-slate-200/70">{groupLabel === 'employee' ? 'Gaji Bulanan' : 'Pembayaran Belum Dibayar'}</th>
-                            <th className="px-3 lg:px-4 py-3.5 text-center border-r border-slate-200/70">Rating</th>
-                            <th className="px-3 lg:px-4 py-3.5 text-center">Aksi</th>
+                            <th className="px-3 lg:px-4 py-3.5 text-center w-10 lg:w-14 border-r border-slate-200/70">{text('number', 'No')}</th>
+                            <th className="px-3 lg:px-4 py-3.5 text-left border-r border-slate-200/70">{text('name', nameHeader)}</th>
+                            <th className="px-3 lg:px-4 py-3.5 text-left border-r border-slate-200/70">{text('role', roleHeader)}</th>
+                            <th className="px-3 lg:px-4 py-3.5 text-left border-r border-slate-200/70">{text('payment', groupLabel === 'employee' ? 'Gaji Bulanan' : 'Pembayaran Belum Dibayar')}</th>
+                            <th className="px-3 lg:px-4 py-3.5 text-center border-r border-slate-200/70">{text('rating', 'Rating')}</th>
+                            <th className="px-3 lg:px-4 py-3.5 text-center">{text('actions', 'Aksi')}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 bg-white">

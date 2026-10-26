@@ -3,6 +3,7 @@ import { ClientFeedback, SatisfactionLevel } from '../../../types';
 import { StarIcon } from '../../../constants';
 import { createClientFeedback, updateClientFeedback } from '../../../services/clientFeedback';
 import { supabase } from '../../../lib/supabaseClient';
+import { customizeUiText, useUiTextOverrides } from '../../../utils/uiTextCustomization';
 
 interface PublicFeedbackFormProps {
     setClientFeedback: React.Dispatch<React.SetStateAction<ClientFeedback[]>>;
@@ -16,6 +17,8 @@ const getSatisfactionFromRating = (rating: number): SatisfactionLevel => {
 };
 
 const PublicFeedbackForm: React.FC<PublicFeedbackFormProps> = ({ setClientFeedback }) => {
+    const uiTextOverrides = useUiTextOverrides();
+    const text = (key: string, fallback: string) => customizeUiText(`public.feedback.${key}`, fallback, uiTextOverrides);
     const [formState, setFormState] = useState({
         clientName: '',
         rating: 0,
@@ -90,7 +93,7 @@ const PublicFeedbackForm: React.FC<PublicFeedbackFormProps> = ({ setClientFeedba
             <div className="w-full max-w-2xl mx-auto">
                 <div className="bg-brand-surface p-8 rounded-2xl shadow-lg border border-brand-border">
                     <div className="text-center mb-8">
-                        <h1 className="text-3xl font-bold text-gradient">Formulir Testimoni</h1>
+                        <h1 className="text-3xl font-bold text-gradient">{text('title', 'Formulir Testimoni')}</h1>
                         <p className="text-sm text-brand-text-secondary mt-2">Kami sangat menghargai waktu Anda untuk memBerikan Testimoni.</p>
                     </div>
 
@@ -154,7 +157,7 @@ const PublicFeedbackForm: React.FC<PublicFeedbackFormProps> = ({ setClientFeedba
                                 disabled={isSubmitting}
                                 className="w-full px-6 py-4 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 active:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
                             >
-                                {isSubmitting ? 'Mengirim...' : 'Kirim Testimoni'}
+                                {isSubmitting ? 'Mengirim...' : text('submit', 'Kirim Testimoni')}
                             </button>
                         </div>
                     </form>

@@ -4,10 +4,13 @@ import { BioLink, BioLinkPage } from '../../types';
 import { DEFAULT_BIO_LINK_PAGE, getBioLinkPage, saveBioLinkPage } from '../../services/bioLinks';
 import { uploadVendorImage } from '../../services/vendorProfile';
 import { generateUUID } from '../../utils/uuid';
+import { customizeUiText, useUiTextOverrides } from '../../utils/uiTextCustomization';
 
 const inputClass = 'w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 outline-none transition focus:border-[#c5b39c] focus:ring-2 focus:ring-[#c5b39c]/20';
 
 const BioLinksPage: React.FC = () => {
+  const uiTextOverrides = useUiTextOverrides();
+  const text = (key: string, fallback: string) => customizeUiText(`links.admin.${key}`, fallback, uiTextOverrides);
   const [page, setPage] = useState<BioLinkPage | null>(null);
   const [form, setForm] = useState({ ...DEFAULT_BIO_LINK_PAGE });
   const [loading, setLoading] = useState(true);
@@ -142,28 +145,28 @@ const BioLinksPage: React.FC = () => {
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a08b73]">Halaman publik</p>
-          <h1 className="mt-1 text-2xl font-bold text-slate-900">Kelola Link Publik</h1>
-          <p className="mt-1 text-sm text-slate-500">Atur profil, WhatsApp, foto, dan semua tautan yang dibagikan.</p>
+          <h1 className="mt-1 text-2xl font-bold text-slate-900">{text('title', 'Kelola Link Publik')}</h1>
+          <p className="mt-1 text-sm text-slate-500">{text('subtitle', 'Atur profil, WhatsApp, foto, dan semua tautan yang dibagikan.')}</p>
         </div>
         <button type="submit" disabled={saving} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#8f7b65] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#77644f] disabled:cursor-not-allowed disabled:opacity-60">
-          <Save size={17} />{saving ? 'Menyimpan...' : 'Simpan perubahan'}
+          <Save size={17} />{saving ? 'Menyimpan...' : text('save', 'Simpan perubahan')}
         </button>
       </header>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <div className="mb-5 flex items-center gap-3">
           <div className="rounded-xl bg-[#f2eee8] p-2.5 text-[#8f7b65]"><LinkIcon size={19} /></div>
-          <div><h2 className="font-semibold text-slate-900">Link yang bisa dibagikan</h2><p className="text-sm text-slate-500">Buka halaman publik atau salin alamatnya.</p></div>
+          <div><h2 className="font-semibold text-slate-900">{text('share.title', 'Link yang bisa dibagikan')}</h2><p className="text-sm text-slate-500">{text('share.description', 'Buka halaman publik atau salin alamatnya.')}</p></div>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row">
           <input aria-label="URL publik" readOnly value={publicUrl} className={`${inputClass} bg-slate-50`} />
-          <button type="button" onClick={copyPublicUrl} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"><Copy size={16} /> Salin link</button>
-          <a href={publicUrl} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"><ExternalLink size={16} /> Lihat halaman</a>
+          <button type="button" onClick={copyPublicUrl} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"><Copy size={16} /> {text('copy', 'Salin link')}</button>
+          <a href={publicUrl} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"><ExternalLink size={16} /> {text('preview', 'Lihat halaman')}</a>
         </div>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <h2 className="font-semibold text-slate-900">Profil dan tampilan</h2>
+        <h2 className="font-semibold text-slate-900">{text('profile.title', 'Profil dan tampilan')}</h2>
         <p className="mb-5 mt-1 text-sm text-slate-500">Foto sampul dan foto profil mengikuti contoh halaman publik.</p>
         <div className="grid gap-5 md:grid-cols-2">
           <label className="block">
@@ -192,8 +195,8 @@ const BioLinksPage: React.FC = () => {
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <div><h2 className="font-semibold text-slate-900">Tautan langsung</h2><p className="mt-1 text-sm text-slate-500">Tambahkan website, pricelist, media sosial, atau URL lainnya.</p></div>
-          <button type="button" onClick={addLink} className="inline-flex items-center gap-2 rounded-xl border border-[#c5b39c] px-4 py-2 text-sm font-semibold text-[#77644f] hover:bg-[#f7f4f0]"><Plus size={16} /> Tambah tautan</button>
+          <div><h2 className="font-semibold text-slate-900">{text('links.title', 'Tautan langsung')}</h2><p className="mt-1 text-sm text-slate-500">Tambahkan website, pricelist, media sosial, atau URL lainnya.</p></div>
+          <button type="button" onClick={addLink} className="inline-flex items-center gap-2 rounded-xl border border-[#c5b39c] px-4 py-2 text-sm font-semibold text-[#77644f] hover:bg-[#f7f4f0]"><Plus size={16} /> {text('links.add', 'Tambah tautan')}</button>
         </div>
         <div className="space-y-3">
           {form.links.map((link, index) => (
@@ -208,7 +211,7 @@ const BioLinksPage: React.FC = () => {
       </section>
 
       <section className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-        <div><h2 className="font-semibold text-slate-900">Status halaman</h2><p className="mt-1 text-sm text-slate-500">Nonaktifkan jika halaman publik belum ingin ditampilkan.</p></div>
+        <div><h2 className="font-semibold text-slate-900">{text('status.title', 'Status halaman')}</h2><p className="mt-1 text-sm text-slate-500">Nonaktifkan jika halaman publik belum ingin ditampilkan.</p></div>
         <label className="inline-flex cursor-pointer items-center gap-3 text-sm font-medium text-slate-700"><input type="checkbox" className="h-4 w-4 accent-[#8f7b65]" checked={form.is_published} onChange={(e) => updateForm('is_published', e.target.checked)} /> Halaman aktif / dipublikasikan</label>
       </section>
 

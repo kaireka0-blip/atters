@@ -2291,53 +2291,30 @@ const Settings: React.FC<SettingsProps> = ({ profile, setProfile, transactions, 
 
     return (
         <div className="settings-page space-y-4 md:space-y-6">
-
-            {/* Mobile Tab Navigation - Horizontal Scroll */}
-            <div className="lg:hidden">
-                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 md:-mx-0 md:px-0">
+            <nav aria-label="Bagian pengaturan" className="w-full rounded-xl border border-brand-border bg-white p-2 shadow-sm md:rounded-2xl md:p-3">
+                <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7">
                     {tabs
                         .filter(tab => !(tab.adminOnly && currentUser?.role !== 'Admin'))
                         .map(tab => (
                             <button
                                 key={tab.id}
+                                type="button"
+                                aria-current={activeTab === tab.id ? 'page' : undefined}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`flex-shrink-0 inline-flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-2 md:py-2.5 rounded-full font-medium text-xs md:text-sm transition-all duration-200 ${activeTab === tab.id
-                                    ? 'bg-brand-accent text-white shadow-lg shadow-brand-accent/30'
-                                    : 'bg-brand-surface text-brand-text-secondary border border-brand-border active:scale-95'
+                                className={`flex min-h-12 items-center justify-center gap-2 rounded-lg px-2 py-2 text-center text-xs font-semibold leading-tight transition-all sm:px-3 sm:text-sm ${activeTab === tab.id
+                                    ? 'bg-brand-accent text-white shadow-sm'
+                                    : 'text-brand-text-secondary hover:bg-brand-bg hover:text-brand-text-primary'
                                     }`}
                             >
-                                <tab.icon className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                                <span className="whitespace-nowrap">{tab.label}</span>
+                                <tab.icon className="h-4 w-4 shrink-0" />
+                                <span>{tab.label}</span>
                             </button>
                         ))}
                 </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
-                {/* Desktop Sidebar Navigation */}
-                <aside className="hidden lg:block lg:col-span-1">
-                    <nav className="sticky top-24 space-y-1 rounded-2xl border border-brand-border bg-white p-3 shadow-sm">
-                        {tabs
-                            .filter(tab => !(tab.adminOnly && currentUser?.role !== 'Admin'))
-                            .map(tab => (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`w-full flex items-center px-4 py-3 text-sm font-semibold rounded-lg transition-all duration-200 text-left ${activeTab === tab.id
-                                        ? 'bg-brand-accent text-white shadow-lg'
-                                        : 'bg-white text-brand-text-secondary hover:bg-brand-accent-light hover:text-brand-text-primary'
-                                        }`}
-                                >
-                                    <tab.icon className="w-5 h-5 mr-3" />
-                                    {tab.label}
-                                </button>
-                            ))}
-                    </nav>
-                </aside>
-                <main className="lg:col-span-3 min-h-[60vh] rounded-xl border border-brand-border bg-white p-3 shadow-sm md:rounded-2xl md:p-5 lg:p-6">
-                    {renderTabContent()}
-                </main>
-            </div>
+            </nav>
+            <main className="min-h-[60vh] w-full rounded-xl border border-brand-border bg-white p-3 shadow-sm md:rounded-2xl md:p-5 lg:p-6">
+                {renderTabContent()}
+            </main>
 
             <Modal isOpen={!!detailUser} onClose={() => setDetailUser(null)} title="Detail Pengguna" size="md">
                 {detailUser && (

@@ -37,6 +37,7 @@ import { RegionPricelistModal } from './components/RegionPricelistModal';
 import PackageRegionTagsModal from './components/PackageRegionTagsModal';
 import { buildPublicShareUrl, getPackageShareIdentifier } from '../../utils/publicRouting';
 import { buildPackageRegionOptions, normalizePackageRegionTag } from '../../utils/packageRegions';
+import { customizeUiText, useUiTextOverrides } from '../../utils/uiTextCustomization';
 
 import {
     Package as PackageIcon,
@@ -62,7 +63,6 @@ import {
     GripVertical
 } from 'lucide-react';
 import RupiahInput from '../../shared/form/RupiahInput';
-import { customizeUiText, useUiTextOverrides } from '../../utils/uiTextCustomization';
 
 export interface PackagesProps {
     packages: Package[];
@@ -328,6 +328,7 @@ export const Packages: React.FC<PackagesProps> = ({
     setInitialAction,
 }) => {
     const uiTextOverrides = useUiTextOverrides();
+    const tableText = (key: string, fallback: string) => customizeUiText(`packages.table.${key}`, fallback, uiTextOverrides);
     const text = (key: string, fallback: string) => customizeUiText(`packages.catalog.${key}`, fallback, uiTextOverrides);
     // ── Main UI States ──
     const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
@@ -1532,13 +1533,13 @@ export const Packages: React.FC<PackagesProps> = ({
                     <table className="w-full min-w-[760px] text-left text-xs">
                         <thead className="bg-[#F4F6F9] text-[10px] uppercase tracking-wider text-[#5A6A85]">
                             <tr>
-                                <th className="px-3 py-3 w-28 text-center">Urutan</th>
-                                <th className="px-4 py-3">Nama</th>
-                                <th className="px-4 py-3">Jenis</th>
-                                <th className="px-4 py-3">Kategori</th>
-                                <th className="px-4 py-3">Wilayah</th>
-                                <th className="px-4 py-3 text-right">Harga</th>
-                                <th className="px-4 py-3 text-right">Aksi</th>
+                                <th className="px-3 py-3 w-28 text-center">{tableText('order', 'Urutan')}</th>
+                                <th className="px-4 py-3">{tableText('name', 'Nama')}</th>
+                                <th className="px-4 py-3">{tableText('type', 'Jenis')}</th>
+                                <th className="px-4 py-3">{tableText('category', 'Kategori')}</th>
+                                <th className="px-4 py-3">{tableText('region', 'Wilayah')}</th>
+                                <th className="px-4 py-3 text-right">{tableText('price', 'Harga')}</th>
+                                <th className="px-4 py-3 text-right">{tableText('actions', 'Aksi')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-[#EAEFF4]">

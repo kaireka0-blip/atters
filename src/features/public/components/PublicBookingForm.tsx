@@ -14,10 +14,19 @@ import { clearPublicDrafts, hydrateForm, inheritFromPackagesDraft, isFormEmpty, 
 import RupiahInput from '../../../shared/form/RupiahInput';
 import { buildPublicShareUrl, getPublicBookingRegionOptions, normalizePublicBookingRegion, resolvePackageShareIdentifier, toPublicNameSlug } from '../../../utils/publicRouting';
 import { generateUUID } from '../../../utils/uuid';
+import { customizeUiText, useUiTextOverrides } from '../../../utils/uiTextCustomization';
 
 const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
 }
+const getAdditionalPackagePrice = (pkg: Package, durationSelections: Record<string, string> = {}) => {
+    const options = pkg.durationOptions || [];
+    if (options.length === 0) return Number(pkg.price) || 0;
+    const selectedOption = options.find(option => option.label === durationSelections[pkg.id])
+        || options.find(option => option.default)
+        || options[0];
+    return Number(selectedOption?.price ?? pkg.price) || 0;
+};
 const initialFormState = {
     clientName: '',
     email: '',
@@ -28,6 +37,7 @@ const initialFormState = {
     date: '',
     packageId: '',
     selectedAdditionalPackageIds: [] as string[],
+    additionalPackageDurationSelections: {} as Record<string, string>,
     selectedAddOnIds: [] as string[],
     promoCode: '',
     dp: '',
@@ -85,6 +95,8 @@ function pickLeadIdentityParams(params: Record<string, string>): Record<string, 
 const PublicBookingForm: React.FC<PublicBookingFormProps> = ({
     setClients, setProjects, packages: rawPackages = [], addOns, setTransactions, userProfile, cards, setCards, pockets, setPockets, promoCodes, setPromoCodes, showNotification, leads, setLeads, addNotification
 }) => {
+    const uiTextOverrides = useUiTextOverrides();
+    const bookingText = (key: string, fallback: string) => customizeUiText(`public.booking.${key}`, fallback, uiTextOverrides);
     const packages = rawPackages;
     // Parse region dan identitas lead dari URL cukup sekali saat mount.
     const urlParams = useMemo(() => readPublicBookingParams(), []);
@@ -325,7 +337,9 @@ const PublicBookingForm: React.FC<PublicBookingFormProps> = ({
                 const isMaxedOut = promoCode.maxUsage != null && promoCode.usageCount >= promoCode.maxUsage;
 
                 if (!isExpired && !isMaxedOut) {
-                    const additionalPackagesPrice = filteredPackages.filter(p => formData.selectedAdditionalPackageIds?.includes(p.id)).reduce((sum, pkg) => sum + pkg.price, 0);
+                    const additionalPackagesPrice = filteredPackages
+                        .filter(pkg => formData.selectedAdditionalPackageIds?.includes(pkg.id))
+                        .reduce((sum, pkg) => sum + getAdditionalPackagePrice(pkg, formData.additionalPackageDurationSelections), 0);
                     const totalBeforeDiscount = (filteredPackages.find(p => p.id === formData.packageId)?.price || 0) + filteredAddOns.filter(addon => formData.selectedAddOnIds.includes(addon.id)).reduce((sum, addon) => sum + addon.price, 0) + additionalPackagesPrice;
                     const discountAmount = promoCode.discountType === 'percentage' ? (totalBeforeDiscount * promoCode.discountValue) / 100 : promoCode.discountValue;
                     const discountText = promoCode.discountType === 'percentage' ? `${promoCode.discountValue}%` : formatCurrency(promoCode.discountValue);
@@ -339,7 +353,7 @@ const PublicBookingForm: React.FC<PublicBookingFormProps> = ({
         } else {
             updatePromoFeedback('', '');
         }
-    }, [formData.promoCode, formData.packageId, formData.selectedAddOnIds, filteredPackages, filteredAddOns, promoCodes]);
+    }, [formData.promoCode, formData.packageId, formData.selectedAddOnIds, formData.selectedAdditionalPackageIds, formData.additionalPackageDurationSelections, filteredPackages, filteredAddOns, promoCodes]);
 
     const { totalBeforeDiscount, discountAmount, totalProject, discountText } = useMemo(() => {
         const selectedPackage = filteredPackages.find(p => p.id === formData.packageId);
@@ -355,7 +369,7 @@ const PublicBookingForm: React.FC<PublicBookingFormProps> = ({
 
         const additionalPackagesPrice = filteredPackages
             .filter(pkg => formData.selectedAdditionalPackageIds?.includes(pkg.id))
-            .reduce((sum, pkg) => sum + pkg.price, 0);
+            .reduce((sum, pkg) => sum + getAdditionalPackagePrice(pkg, formData.additionalPackageDurationSelections), 0);
 
         const transportFee = Number(formData.transportCost) || 0;
         const totalBeforeDiscount = packagePrice + addOnsPrice + additionalPackagesPrice;
@@ -383,7 +397,7 @@ const PublicBookingForm: React.FC<PublicBookingFormProps> = ({
 
         const totalProject = totalBeforeDiscount - discountAmount + transportFee;
         return { totalBeforeDiscount, discountAmount, totalProject, discountText };
-    }, [formData.packageId, formData.selectedAddOnIds, formData.promoCode, formData.transportCost, formData.durationSelection, filteredPackages, filteredAddOns, promoCodes]);
+    }, [formData.packageId, formData.selectedAddOnIds, formData.selectedAdditionalPackageIds, formData.additionalPackageDurationSelections, formData.promoCode, formData.transportCost, formData.durationSelection, filteredPackages, filteredAddOns, promoCodes]);
 
     const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
@@ -507,7 +521,14 @@ const PublicBookingForm: React.FC<PublicBookingFormProps> = ({
                 });
 
             const selectedAdditionalPackages = filteredPackages.filter(p => formData.selectedAdditionalPackageIds?.includes(p.id));
-            const additionalPackageRecords = selectedAdditionalPackages.map(pkg => ({ id: pkg.id, name: pkg.name, price: pkg.price }));
+            const additionalPackageRecords = selectedAdditionalPackages.map(pkg => ({
+                id: pkg.id,
+                name: pkg.name,
+                price: getAdditionalPackagePrice(pkg, formData.additionalPackageDurationSelections),
+                ...(formData.additionalPackageDurationSelections[pkg.id]
+                    ? { durationSelection: formData.additionalPackageDurationSelections[pkg.id] }
+                    : {}),
+            }));
             const selectedAddOns = (addOns || []).filter(addon => formData.selectedAddOnIds.includes(addon.id));
             const remainingPayment = totalProject - dpAmount;
             const transportFee = Number(formData.transportCost) || 0;
@@ -671,6 +692,7 @@ const PublicBookingForm: React.FC<PublicBookingFormProps> = ({
                 formData: { ...formData },
                 selectedPackage,
                 selectedAddOns,
+                selectedAdditionalPackages: additionalPackageRecords,
                 totalProject,
                 userProfile
             });
@@ -690,9 +712,12 @@ const PublicBookingForm: React.FC<PublicBookingFormProps> = ({
 
     if (isSubmitted && submittedData) {
         // Generate WhatsApp message template using stored data
-        const { formData: submittedFormData, selectedPackage, selectedAddOns, totalProject, userProfile: submittedProfile } = submittedData;
+        const { formData: submittedFormData, selectedPackage, selectedAddOns, selectedAdditionalPackages = [], totalProject, userProfile: submittedProfile } = submittedData;
         const selectedAddOnsText = selectedAddOns
             .map((addon: any) => `• ${addon.name} (+${formatCurrency(addon.price)})`)
+            .join('\n');
+        const selectedAdditionalPackagesText = selectedAdditionalPackages
+            .map((pkg: any) => `• ${pkg.name}${pkg.durationSelection ? ` — ${pkg.durationSelection}` : ''} (+${formatCurrency(pkg.price)})`)
             .join('\n');
         
         const whatsappMessage = `Halo ${submittedProfile.companyName}! 👋
@@ -708,6 +733,7 @@ Saya baru saja mengirim formulir booking melalui website Anda dengan detail beri
 • Package: ${selectedPackage?.name || 'Tidak dipilih'}
 ${submittedFormData.durationSelection ? `• Durasi: ${submittedFormData.durationSelection}` : ''}
 ${selectedAddOnsText ? `• Add-On:\n${selectedAddOnsText}` : ''}
+${selectedAdditionalPackagesText ? `• Package Tambahan:\n${selectedAdditionalPackagesText}` : ''}
 ${submittedFormData.promoCode ? `• Kode Promo: ${submittedFormData.promoCode}` : ''}
 
 💰 *TOTAL BIAYA*
@@ -803,7 +829,7 @@ Mohon konfirmasi untuk langkah selanjutnya. Terima kasih! 🙏`;
         return (
             <div className="flex items-center justify-center min-h-screen p-3 md:p-4">
                 <div className="w-full max-w-lg p-6 md:p-8 text-center bg-public-surface rounded-2xl shadow-lg border border-public-border">
-                    <h4 className="text-xl font-bold text-gradient mb-6">Informasi Pengantin & Acara Pernikahan</h4>
+                    <h4 className="text-xl font-bold text-gradient mb-6">{bookingText('section', 'Informasi Pengantin & Acara Pernikahan')}</h4>
                     <p className="mt-3 text-public-text-secondary text-xs md:text-sm">Untuk meminimalisir kesalahan, silakan pilih wilayah terlebih dahulu.</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5">
                         {regionOptions.map(r => (
@@ -1042,13 +1068,13 @@ Mohon konfirmasi untuk langkah selanjutnya. Terima kasih! 🙏`;
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 md:gap-x-8 gap-y-2">
                             <div className="space-y-5">
-                                <h4 className="text-sm md:text-base font-semibold text-gradient border-b border-black pb-2">Informasi Pengantin & Acara Pernikahan</h4>
+                                <h4 className="text-sm md:text-base font-semibold text-gradient border-b border-black pb-2">{bookingText('section', 'Informasi Pengantin & Acara Pernikahan')}</h4>
                                  <div className="space-y-2">
-                                    <label htmlFor="clientName" className="block text-xs text-black">Nama Pengantin</label>
+                                    <label htmlFor="clientName" className="block text-xs text-black">{bookingText('name', 'Nama Pengantin')}</label>
                                     <input type="text" id="clientName" name="clientName" value={formData.clientName} onChange={handleFormChange} className="w-full px-4 py-3 rounded-xl border border-public-border bg-white text-black focus:outline-none focus:border-black transition-all" placeholder="Masukkan Nama Pengantin" required />
                                 </div>
                                 <div className="space-y-2">
-                                    <label htmlFor="phone" className="block text-xs text-black">Nomor Telepon (WhatsApp)</label>
+                                    <label htmlFor="phone" className="block text-xs text-black">{bookingText('phone', 'Nomor Telepon (WhatsApp)')}</label>
                                     <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleFormChange} className="w-full px-4 py-3 rounded-xl border border-public-border bg-white text-black focus:outline-none focus:border-black transition-all" placeholder="08123456789" required />
                                 </div>
                                 <div className="space-y-2">
@@ -1062,14 +1088,14 @@ Mohon konfirmasi untuk langkah selanjutnya. Terima kasih! 🙏`;
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label htmlFor="projectType" className="block text-xs text-black">Jenis Acara Pernikahan</label>
+                                        <label htmlFor="projectType" className="block text-xs text-black">{bookingText('eventType', 'Jenis Acara Pernikahan')}</label>
                                         <select id="projectType" name="projectType" value={formData.projectType} onChange={handleFormChange} className="w-full px-4 py-3 rounded-xl border border-public-border bg-white text-black focus:outline-none focus:border-black transition-all" required>
                                             <option value="" disabled>Pilih Jenis...</option>
                                             {userProfile.projectTypes.map(pt => <option key={pt} value={pt}>{pt}</option>)}
                                         </select>
                                     </div>
                                     <div className="space-y-2">
-                                        <label htmlFor="date" className="block text-xs text-black">Tanggal Acara Pernikahan (Opsional)</label>
+                                        <label htmlFor="date" className="block text-xs text-black">{bookingText('date', 'Tanggal Acara Pernikahan (Opsional)')}</label>
                                         <input type="date" id="date" name="date" value={formData.date} onChange={handleFormChange} className="w-full px-4 py-3 rounded-xl border border-public-border bg-white text-black focus:outline-none focus:border-black transition-all" />
                                         <p className="text-[10px] text-public-text-secondary">Kosongkan jika tanggal acara belum ditentukan.</p>
                                         {formData.date && (
@@ -1080,7 +1106,7 @@ Mohon konfirmasi untuk langkah selanjutnya. Terima kasih! 🙏`;
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <label htmlFor="location" className="block text-xs text-black">Lokasi (Kota)</label>
+                                    <label htmlFor="location" className="block text-xs text-black">{bookingText('location', 'Lokasi (Kota)')}</label>
                                     <input type="text" id="location" name="location" value={formData.location} onChange={handleFormChange} className="w-full px-4 py-3 rounded-xl border border-public-border bg-white text-black focus:outline-none focus:border-black transition-all" placeholder="Contoh: Jakarta" />
                                 </div>
                                 <div className="space-y-2">
@@ -1288,39 +1314,109 @@ Mohon konfirmasi untuk langkah selanjutnya. Terima kasih! 🙏`;
                                             </button>
                                         ) : (
                                             <div className="space-y-2">
-                                                {filteredPackages.filter(p => p.id !== formData.packageId).map(pkg => (
-                                                    <label key={pkg.id} className={`grid w-full min-w-0 grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-x-2 gap-y-0.5 rounded-lg border bg-white p-2 text-left shadow-sm transition hover:border-neutral-500 hover:bg-neutral-50 cursor-pointer sm:gap-3 sm:rounded-xl sm:p-2.5 ${formData.selectedAdditionalPackageIds?.includes(pkg.id) ? 'border-neutral-900 ring-1 ring-neutral-300' : 'border-neutral-200'
-                                                        }`}>
-                                                        {pkg.coverImage ? (
-                                                            <img src={pkg.coverImage} alt="" className="row-span-2 h-10 w-10 shrink-0 rounded-lg object-cover sm:row-span-1 sm:h-12 sm:w-12"  loading="lazy" decoding="async" />
-                                                        ) : (
-                                                            <span className="row-span-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-black sm:row-span-1 sm:h-12 sm:w-12">
-                                                                <PackageIcon className="h-5 w-5" aria-hidden="true" />
-                                                            </span>
-                                                        )}
-                                                        <span className="min-w-0 flex-1">
-                                                            <span className="block text-sm font-bold text-slate-900">{pkg.name}</span>
-                                                            <span className="block text-[11px] font-extrabold text-neutral-950 sm:text-xs">{formatCurrency(pkg.price)}</span>
-                                                        </span>
-                                                        <div className="col-start-3 row-span-2 flex items-center justify-end px-1">
-                                                            <input 
-                                                                type="checkbox" 
-                                                                name="additionalPackages" 
-                                                                checked={formData.selectedAdditionalPackageIds?.includes(pkg.id)} 
-                                                                onChange={(e) => {
-                                                                    const checked = e.target.checked;
-                                                                    setFormData(prev => ({
-                                                                        ...prev,
-                                                                        selectedAdditionalPackageIds: checked
-                                                                            ? [...(prev.selectedAdditionalPackageIds || []), pkg.id]
-                                                                            : (prev.selectedAdditionalPackageIds || []).filter(id => id !== pkg.id)
-                                                                    }));
-                                                                }} 
-                                                                className="h-4 w-4 text-black rounded focus:ring-neutral-900 flex-shrink-0 cursor-pointer pointer-events-none" 
-                                                            />
-                                                        </div>
-                                                    </label>
-                                                ))}
+                                                {filteredPackages.filter(p => p.id !== formData.packageId).map(pkg => {
+                                                    const isSelected = formData.selectedAdditionalPackageIds?.includes(pkg.id) || false;
+                                                    const durationOptions = pkg.durationOptions || [];
+                                                    const selectedDuration = durationOptions.find(option => option.label === formData.additionalPackageDurationSelections[pkg.id])
+                                                        || durationOptions.find(option => option.default)
+                                                        || durationOptions[0];
+                                                    const selectedPrice = getAdditionalPackagePrice(pkg, formData.additionalPackageDurationSelections);
+                                                    const photographers = selectedDuration?.photographers || pkg.photographers;
+                                                    const videographers = selectedDuration?.videographers || pkg.videographers;
+                                                    const processingTime = selectedDuration?.processingTime || pkg.processingTime;
+                                                    const digitalItems = (selectedDuration?.digitalItems?.filter(Boolean).length ? selectedDuration.digitalItems : pkg.digitalItems)?.filter(Boolean) || [];
+                                                    const physicalItems = (selectedDuration?.physicalItems?.filter(item => item?.name).length ? selectedDuration.physicalItems : pkg.physicalItems)?.filter(item => item?.name) || [];
+                                                    const hasDetails = photographers || videographers || processingTime || digitalItems.length > 0 || physicalItems.length > 0;
+
+                                                    return (
+                                                        <React.Fragment key={pkg.id}>
+                                                            <label className={`grid w-full min-w-0 grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-x-2 gap-y-0.5 rounded-lg border bg-white p-2 text-left shadow-sm transition hover:border-neutral-500 hover:bg-neutral-50 cursor-pointer sm:gap-3 sm:rounded-xl sm:p-2.5 ${isSelected ? 'border-neutral-900 ring-1 ring-neutral-300' : 'border-neutral-200'}`}>
+                                                                {pkg.coverImage ? (
+                                                                    <img src={pkg.coverImage} alt="" className="row-span-2 h-10 w-10 shrink-0 rounded-lg object-cover sm:row-span-1 sm:h-12 sm:w-12" loading="lazy" decoding="async" />
+                                                                ) : (
+                                                                    <span className="row-span-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-black sm:row-span-1 sm:h-12 sm:w-12">
+                                                                        <PackageIcon className="h-5 w-5" aria-hidden="true" />
+                                                                    </span>
+                                                                )}
+                                                                <span className="min-w-0 flex-1">
+                                                                    <span className="block text-sm font-bold text-slate-900">{pkg.name}</span>
+                                                                    {durationOptions.length > 1 && !isSelected && <span className="block text-[9px] font-semibold text-neutral-500">Mulai dari</span>}
+                                                                    <span className="block text-[11px] font-extrabold text-neutral-950 sm:text-xs">{formatCurrency(isSelected ? selectedPrice : durationOptions.length > 1 ? Math.min(...durationOptions.map(option => Number(option.price) || 0)) : pkg.price)}</span>
+                                                                </span>
+                                                                <div className="col-start-3 row-span-2 flex items-center justify-end px-1">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        name="additionalPackages"
+                                                                        checked={isSelected}
+                                                                        onChange={event => {
+                                                                            const checked = event.target.checked;
+                                                                            setFormData(previous => {
+                                                                                const durationSelections = { ...(previous.additionalPackageDurationSelections || {}) };
+                                                                                if (checked && durationOptions.length > 0) {
+                                                                                    durationSelections[pkg.id] = (durationOptions.find(option => option.default) || durationOptions[0]).label;
+                                                                                } else if (!checked) {
+                                                                                    delete durationSelections[pkg.id];
+                                                                                }
+                                                                                return {
+                                                                                    ...previous,
+                                                                                    selectedAdditionalPackageIds: checked
+                                                                                        ? [...new Set([...(previous.selectedAdditionalPackageIds || []), pkg.id])]
+                                                                                        : (previous.selectedAdditionalPackageIds || []).filter(id => id !== pkg.id),
+                                                                                    additionalPackageDurationSelections: durationSelections,
+                                                                                };
+                                                                            });
+                                                                        }}
+                                                                        className="h-4 w-4 text-black rounded focus:ring-neutral-900 flex-shrink-0 cursor-pointer pointer-events-none"
+                                                                    />
+                                                                </div>
+                                                            </label>
+                                                            {isSelected && (
+                                                                <div className="space-y-2 rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+                                                                    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                                                                        <p className="text-xs font-bold text-black">Detail Package: {pkg.name}{selectedDuration && <span className="font-normal text-neutral-600"> — {selectedDuration.label}</span>}</p>
+                                                                        <p className="text-xs font-extrabold text-black">{formatCurrency(selectedPrice)}</p>
+                                                                    </div>
+                                                                    {hasDetails ? (
+                                                                        <ul className="space-y-1 text-[11px] text-public-text-secondary">
+                                                                            {photographers && <li>• {photographers}</li>}
+                                                                            {videographers && <li>• {videographers}</li>}
+                                                                            {processingTime && <li>• Waktu pengerjaan: {processingTime}</li>}
+                                                                            {digitalItems.map((item, index) => <li key={`digital-${index}`}>• {item}</li>)}
+                                                                            {physicalItems.map((item, index) => <li key={`physical-${index}`}>• {item.name}</li>)}
+                                                                        </ul>
+                                                                    ) : <p className="text-[11px] italic text-public-text-secondary">Rincian package belum diatur.</p>}
+                                                                    {durationOptions.length > 1 && (
+                                                                        <fieldset className="space-y-1 border-t border-neutral-200 pt-2">
+                                                                            <legend className="text-[11px] font-semibold text-black">Pilih jam kerja dan harga</legend>
+                                                                            {durationOptions.map(option => (
+                                                                                <label key={option.label} className={`flex min-h-10 cursor-pointer items-center justify-between gap-3 rounded-md border px-2.5 py-2 text-xs ${selectedDuration?.label === option.label ? 'border-neutral-900 bg-white' : 'border-neutral-200 bg-neutral-100 hover:bg-white'}`}>
+                                                                                    <span>{option.label}</span>
+                                                                                    <span className="flex shrink-0 items-center gap-2.5">
+                                                                                        <span className="font-bold text-black">{formatCurrency(option.price)}</span>
+                                                                                        <input
+                                                                                            type="radio"
+                                                                                            name={`additionalPackageDuration-${pkg.id}`}
+                                                                                            value={option.label}
+                                                                                            checked={selectedDuration?.label === option.label}
+                                                                                            onChange={() => setFormData(previous => ({
+                                                                                                ...previous,
+                                                                                                additionalPackageDurationSelections: {
+                                                                                                    ...(previous.additionalPackageDurationSelections || {}),
+                                                                                                    [pkg.id]: option.label,
+                                                                                                },
+                                                                                            }))}
+                                                                                            className="h-3.5 w-3.5 accent-black"
+                                                                                        />
+                                                                                    </span>
+                                                                                </label>
+                                                                            ))}
+                                                                        </fieldset>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </React.Fragment>
+                                                    );
+                                                })}
                                                 <div className="flex justify-center mt-2">
                                                     <button type="button" onClick={() => setIsAdditionalPackagesOpen(false)} className="text-xs font-semibold text-public-text-secondary hover:underline">Tutup Daftar</button>
                                                 </div>
@@ -1419,7 +1515,7 @@ Mohon konfirmasi untuk langkah selanjutnya. Terima kasih! 🙏`;
                         </div>
 
                         <div className="pt-6">
-                            <button type="submit" disabled={isSubmitting} className="w-full px-6 py-4 rounded-xl bg-black text-white font-semibold text-base sm:text-lg hover:bg-neutral-800 active:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl">{isSubmitting ? 'Mengirim...' : 'Kirim Formulir Pemesanan'}</button>
+                            <button type="submit" disabled={isSubmitting} className="w-full px-6 py-4 rounded-xl bg-black text-white font-semibold text-base sm:text-lg hover:bg-neutral-800 active:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl">{isSubmitting ? 'Mengirim...' : bookingText('submit', 'Kirim Formulir Pemesanan')}</button>
                         </div>
                     </form>
                     <div className="mt-6 flex justify-center items-center gap-4">

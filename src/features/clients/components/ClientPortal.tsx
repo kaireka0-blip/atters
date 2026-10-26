@@ -27,6 +27,7 @@ import PackageTermsDisplay from '../../packages/components/PackageTermsDisplay';
 import { getPackageTerms } from '../../packages/packageTerms';
 import WorkflowDisplay from '../../packages/components/WorkflowDisplay';
 import { getWorkflows } from '../../packages/workflows';
+import { customizeUiText, useUiTextOverrides } from '../../../utils/uiTextCustomization';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -176,6 +177,8 @@ const ClientPortal: React.FC<ClientPortalProps> = ({
   accessId, clients = [], projects = [], transactions = [], setClientFeedback,
   showNotification, userProfile, packages = [], teamMembers = [],
 }) => {
+  const uiTextOverrides = useUiTextOverrides();
+  const portalText = (key: string, fallback: string) => customizeUiText(`portal.client.${key}`, fallback, uiTextOverrides);
   const profile = userProfile || {} as Profile;
   const [fetchedClient, setFetchedClient] = useState<Client | null>(null);
   const [fetchedProjects, setFetchedProjects] = useState<Project[]>([]);
@@ -254,14 +257,14 @@ const ClientPortal: React.FC<ClientPortalProps> = ({
   }
 
   const tabs = [
-    ...(!isVendorClient ? [{ key: 'beranda', label: 'Beranda', active: 'tab-active-mono' }] : []),
-    { key: 'proyek', label: 'Acara Saya', active: 'tab-active-mono' },
-    { key: 'meeting', label: 'Jadwal Meeting', active: 'tab-active-mono' },
-    { key: 'dokumen', label: 'Link File', active: 'tab-active-mono' },
-    ...(!isVendorClient ? [{ key: 'keuangan', label: 'Invoice', active: 'tab-active-mono' }] : []),
-    ...(!isVendorClient ? [{ key: 'syarat-paket', label: 'Syarat & Ketentuan', active: 'tab-active-mono' }] : []),
-    ...(!isVendorClient ? [{ key: 'workflow', label: 'Workflow', active: 'tab-active-mono' }] : []),
-    { key: 'testimoni', label: 'Testimoni', active: 'tab-active-mono' },
+    ...(!isVendorClient ? [{ key: 'beranda', label: portalText('tab.home', 'Beranda'), active: 'tab-active-mono' }] : []),
+    { key: 'proyek', label: portalText('tab.events', 'Acara Saya'), active: 'tab-active-mono' },
+    { key: 'meeting', label: portalText('tab.meetings', 'Jadwal Meeting'), active: 'tab-active-mono' },
+    { key: 'dokumen', label: portalText('tab.files', 'Link File'), active: 'tab-active-mono' },
+    ...(!isVendorClient ? [{ key: 'keuangan', label: portalText('tab.invoice', 'Invoice'), active: 'tab-active-mono' }] : []),
+    ...(!isVendorClient ? [{ key: 'syarat-paket', label: portalText('tab.terms', 'Syarat & Ketentuan'), active: 'tab-active-mono' }] : []),
+    ...(!isVendorClient ? [{ key: 'workflow', label: portalText('tab.workflow', 'Workflow'), active: 'tab-active-mono' }] : []),
+    { key: 'testimoni', label: portalText('tab.feedback', 'Testimoni'), active: 'tab-active-mono' },
   ];
 
   return (
@@ -298,7 +301,7 @@ const ClientPortal: React.FC<ClientPortalProps> = ({
               <h1 className="text-2xl sm:text-3xl font-black text-white leading-tight">
                 Halo, <span className="text-zinc-300">{(client.name || 'Pengantin').split(/[\s&]/)[0]}!</span>
               </h1>
-              <p className="text-white/85 text-sm mt-1 font-medium">Selamat datang di portal pernikahan Anda</p>
+              <p className="text-white/85 text-sm mt-1 font-medium">{portalText('welcome', 'Selamat datang di portal pernikahan Anda')}</p>
 
               <div className="mt-3 sm:mt-4 flex flex-wrap gap-2">
                 {clientProjects.length > 0 && (
@@ -741,7 +744,7 @@ const ProjectsTab: React.FC<{
             <div className="bg-zinc-900 p-3.5 sm:p-4">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-white/50 mb-0.5">Detail Acara</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-white/50 mb-0.5">{portalText('event.title', 'Detail Acara')}</p>
                   <h3 className="text-base sm:text-lg font-black text-white leading-tight truncate">{selectedProject.projectName}</h3>
                 </div>
                 <span className="text-xs text-white/70 font-semibold shrink-0">{formatDate(selectedProject.date)}</span>
@@ -751,7 +754,7 @@ const ProjectsTab: React.FC<{
               {/* Progress */}
               <div className="mt-2.5">
                 <div className="flex justify-between text-[10px] font-bold text-white/50 mb-1">
-                  <span>Progres Pengerjaan</span>
+                  <span>{portalText('event.progress', 'Progres Pengerjaan')}</span>
                   <span>{displayProgress}%</span>
                 </div>
                 <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
@@ -776,7 +779,7 @@ const ProjectsTab: React.FC<{
 
           {/* Journey roadmap */}
           <div className="portal-card rounded-2xl p-4 sm:p-5 portal-animate portal-animate-2">
-            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">Perjalanan Acara</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">{portalText('event.journey', 'Perjalanan Acara')}</p>
 
             <div className="relative pl-8">
               <div className="absolute left-2.5 top-2 bottom-2 w-px bg-zinc-200" />

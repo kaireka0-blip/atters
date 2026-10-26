@@ -7,12 +7,15 @@ import { getPublicProfile } from '../../../services/profile';
 import { getClient } from '../../../services/clients';
 import { useSupabaseRealtimeRefresh } from '../../../hooks/useSupabaseRealtimeRefresh';
 import { downloadReceiptPdf } from '../../clients/utils/receiptPdf';
+import { customizeUiText, useUiTextOverrides } from '../../../utils/uiTextCustomization';
 
 interface PublicReceiptProps {
     transactionId: string;
 }
 
 const PublicReceipt: React.FC<PublicReceiptProps> = ({ transactionId }) => {
+    const uiTextOverrides = useUiTextOverrides();
+    const text = (key: string, fallback: string) => customizeUiText(`public.receipt.${key}`, fallback, uiTextOverrides);
     const [transaction, setTransaction] = useState<Transaction | null>(null);
     const [project, setProject] = useState<Project | null>(null);
     const [profile, setProfile] = useState<Profile | null>(null);
@@ -146,7 +149,7 @@ const PublicReceipt: React.FC<PublicReceiptProps> = ({ transactionId }) => {
     }
 
     const isExpense = transaction.type === TransactionType.EXPENSE;
-    const documentTitle = isExpense ? 'Bukti Pengeluaran' : 'Tanda Terima';
+    const documentTitle = isExpense ? 'Bukti Pengeluaran' : text('title', 'Tanda Terima');
     const statusText = isExpense ? 'Telah Dibayarkan Secara Sah' : 'Telah Diterima Secara Sah';
     const statusColor = isExpense ? 'text-blue-600' : 'text-green-600';
 
@@ -173,7 +176,7 @@ const PublicReceipt: React.FC<PublicReceiptProps> = ({ transactionId }) => {
                     </div>
                     <button onClick={handleDownloadPDF} className="flex items-center gap-2 px-6 py-3 bg-brand-accent hover:bg-brand-accent-hover text-white font-bold rounded-xl shadow-lg shadow-brand-accent/20 transition-all group">
                         <DownloadIcon className="w-5 h-5 group-hover:translate-y-0.5 transition-transform" />
-                        <span>Unduh PDF</span>
+                        <span>{text('download', 'Unduh PDF')}</span>
                     </button>
                 </div>
 

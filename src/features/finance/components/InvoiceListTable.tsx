@@ -2,6 +2,7 @@ import React from 'react';
 import { InvoiceDoc, SortField, SortDir } from '../hooks/useInvoices';
 import { ArrowUpDown, ChevronUp, ChevronDown, Eye, Trash2, Pencil, FileText, Plus } from 'lucide-react';
 import { MobileExpandableExtra } from '../../../components/ui/MobileProgressiveDisclosure';
+import { customizeUiText, useUiTextOverrides } from '../../../utils/uiTextCustomization';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
@@ -128,6 +129,8 @@ const InvoiceListTable: React.FC<InvoiceListTableProps> = ({
   onDelete,
   onAdd,
 }) => {
+  const textOverrides = useUiTextOverrides();
+  const text = (key: string, fallback: string) => customizeUiText(`table.invoice.${key}`, fallback, textOverrides);
   if (docs.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center px-4">
@@ -221,15 +224,15 @@ const InvoiceListTable: React.FC<InvoiceListTableProps> = ({
         <table className="w-full text-xs lg:text-sm text-left">
           <thead className="bg-brand-bg/60 border-b border-brand-border">
             <tr>
-              <Th label="No. Dokumen" field="number" sortField={sortField} sortDir={sortDir} onSort={onSort} className="px-2 lg:px-4" />
-              <Th label="Jenis" sortField={sortField} sortDir={sortDir} onSort={onSort} className="px-2 lg:px-4" />
-              <Th label="Pengantin" field="clientName" sortField={sortField} sortDir={sortDir} onSort={onSort} className="px-2 lg:px-4" />
-              <Th label="Acara" sortField={sortField} sortDir={sortDir} onSort={onSort} className="hidden lg:table-cell px-2 lg:px-4" />
-              <Th label="Tanggal" field="date" sortField={sortField} sortDir={sortDir} onSort={onSort} className="px-2 lg:px-4" />
-              <Th label="Jumlah" field="amount" sortField={sortField} sortDir={sortDir} onSort={onSort} className="text-right px-2 lg:px-4" />
-              <Th label="Status" sortField={sortField} sortDir={sortDir} onSort={onSort} className="px-2 lg:px-4" />
+              <Th label={text('number', 'No. Dokumen')} field="number" sortField={sortField} sortDir={sortDir} onSort={onSort} className="px-2 lg:px-4" />
+              <Th label={text('kind', 'Jenis')} sortField={sortField} sortDir={sortDir} onSort={onSort} className="px-2 lg:px-4" />
+              <Th label={text('client', 'Pengantin')} field="clientName" sortField={sortField} sortDir={sortDir} onSort={onSort} className="px-2 lg:px-4" />
+              <Th label={text('event', 'Acara')} sortField={sortField} sortDir={sortDir} onSort={onSort} className="hidden lg:table-cell px-2 lg:px-4" />
+              <Th label={text('date', 'Tanggal')} field="date" sortField={sortField} sortDir={sortDir} onSort={onSort} className="px-2 lg:px-4" />
+              <Th label={text('amount', 'Jumlah')} field="amount" sortField={sortField} sortDir={sortDir} onSort={onSort} className="text-right px-2 lg:px-4" />
+              <Th label={text('status', 'Status')} sortField={sortField} sortDir={sortDir} onSort={onSort} className="px-2 lg:px-4" />
               <th className="px-2 lg:px-4 py-3 text-right text-[10px] font-black uppercase tracking-wider text-brand-text-secondary">
-                Aksi
+                {text('actions', 'Aksi')}
               </th>
             </tr>
           </thead>

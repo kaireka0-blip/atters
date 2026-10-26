@@ -42,6 +42,10 @@ export interface DecisionInsight {
     status: 'healthy' | 'caution' | 'warning';
 }
 
+const isInternalTransfer = (transaction: Transaction) =>
+    transaction.category?.trim().toLowerCase() === 'transfer internal'
+    || transaction.description?.trim().toLowerCase().startsWith('transfer:');
+
 export function useFinanceCalculations({
     transactions: rawTransactions,
     cards,
@@ -72,7 +76,9 @@ export function useFinanceCalculations({
         const monthKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         const monthLabel = (date: Date) => date.toLocaleString('id-ID', { month: 'short', year: '2-digit' });
         const monthlyHistorical: Record<string, { income: number; expense: number; year: number; month: number }> = {};
-        const historicalTransactions = transactions.filter(t => new Date(t.date) <= now);
+        // Internal movement between cards/pockets is recorded for audit, but it
+        // is neither operating income nor expense and must not distort cash flow.
+        const historicalTransactions = transactions.filter(t => new Date(t.date) <= now && !isInternalTransfer(t));
 
         historicalTransactions.forEach(t => {
             const date = new Date(t.date);
@@ -235,12 +241,12 @@ export function useFinanceCalculations({
         const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
         const recentTransactions = transactions.filter(t => {
             const date = new Date(t.date);
-            return date >= sixMonthsAgo && date <= now;
+            return date >= sixMonthsAgo && date <= now && !isInternalTransfer(t);
         });
         const recentNetChange = recentTransactions.filter(t => t.type === TransactionType.EXPENSE).reduce((sum, t) => sum + t.amount, 0) - recentTransactions.filter(t => t.type === TransactionType.INCOME).reduce((sum, t) => sum + t.amount, 0);
         const monthlyBurnRate = recentNetChange > 0 ? recentNetChange / 6 : 0;
 
-        let runway = 'Tak Terbatas';
+        let runway = 'Tidak ada defisit';
         if (monthlyBurnRate > 0) {
             const totalAssets = cards.reduce((sum, card) => sum + card.balance, 0);
             const runwayInMonths = totalAssets / monthlyBurnRate;
@@ -330,6 +336,13 @@ export function useFinanceCalculations({
         const expense = filteredTransactions
             .filter(t => t.type === TransactionType.EXPENSE)
             .reduce((sum, t) => sum + t.amount, 0);
+        return { income, expense, net: income - expense };
+    }, [filteredTransactions]);
+
+    const cashflowFilteredSummary = useMemo(() => {
+        const economicTransactions = filteredTransactions.filter(transaction => !isInternalTransfer(transaction));
+        const income = economicTransactions.filter(t => t.type === TransactionType.INCOME).reduce((sum, t) => sum + t.amount, 0);
+        const expense = economicTransactions.filter(t => t.type === TransactionType.EXPENSE).reduce((sum, t) => sum + t.amount, 0);
         return { income, expense, net: income - expense };
     }, [filteredTransactions]);
 
@@ -514,6 +527,7 @@ export function useFinanceCalculations({
         categoryTotals,
         filteredTransactions,
         filteredSummary,
+        cashflowFilteredSummary,
         reportClientOptions,
         reportTransactions,
         projectProfitabilityData,

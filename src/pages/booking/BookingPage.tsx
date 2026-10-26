@@ -259,6 +259,8 @@ interface BookingProps {
 }
 
 const Booking: React.FC<BookingProps> = ({ leads, setLeads, leadsLoaded, projectsLoaded, clients, projects, setProjects, packages, userProfile, setProfile, handleNavigation, showNotification }) => {
+    const uiTextOverrides = useUiTextOverrides();
+    const tableText = (key: string, fallback: string) => customizeUiText(`table.booking.${key}`, fallback, uiTextOverrides);
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
@@ -684,17 +686,17 @@ const Booking: React.FC<BookingProps> = ({ leads, setLeads, leadsLoaded, project
                         <table className="w-full text-sm text-left">
                             <thead className="text-xs text-brand-text-secondary uppercase bg-brand-bg/40">
                                 <tr>
-                                    <th className="px-4 py-3 text-center w-12">No</th>
-                                    <th className="px-4 py-3">Tanggal Booking</th>
-                                    <th className="px-4 py-3">Nama Pengantin</th>
-                                    <th className="px-4 py-3">Nama Acara</th>
-                                    <th className="px-4 py-3">Jenis Acara</th>
-                                    <th className="px-4 py-3">Lokasi</th>
-                                    <th className="px-4 py-3">Package</th>
-                                    <th className="px-4 py-3 text-right">Total Biaya</th>
-                                    <th className="px-4 py-3 text-right">DP Dibayar</th>
-                                    <th className="px-4 py-3 text-center">Bukti Bayar</th>
-                                    <th className="px-4 py-3 text-center">Aksi</th>
+                                    <th className="px-4 py-3 text-center w-12">{tableText('number', 'No')}</th>
+                                    <th className="px-4 py-3">{tableText('date', 'Tanggal Booking')}</th>
+                                    <th className="px-4 py-3">{tableText('client', 'Nama Pengantin')}</th>
+                                    <th className="px-4 py-3">{tableText('event', 'Nama Acara')}</th>
+                                    <th className="px-4 py-3">{tableText('type', 'Jenis Acara')}</th>
+                                    <th className="px-4 py-3">{tableText('location', 'Lokasi')}</th>
+                                    <th className="px-4 py-3">{tableText('package', 'Package')}</th>
+                                    <th className="px-4 py-3 text-right">{tableText('total', 'Total Biaya')}</th>
+                                    <th className="px-4 py-3 text-right">{tableText('deposit', 'DP Dibayar')}</th>
+                                    <th className="px-4 py-3 text-center">{tableText('proof', 'Bukti Bayar')}</th>
+                                    <th className="px-4 py-3 text-center">{tableText('actions', 'Aksi')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-brand-border">
@@ -890,17 +892,17 @@ const Booking: React.FC<BookingProps> = ({ leads, setLeads, leadsLoaded, project
                         <table className="w-full text-sm text-left">
                             <thead className="text-xs text-brand-text-secondary uppercase bg-brand-bg/40">
                                 <tr>
-                                    <th className="px-4 py-3 text-center w-12">No</th>
-                                    <th className="px-4 py-3">Tanggal Booking</th>
-                                    <th className="px-4 py-3">Nama Pengantin</th>
-                                    <th className="px-4 py-3">Nama Acara</th>
-                                    <th className="px-4 py-3">Jenis Acara</th>
-                                    <th className="px-4 py-3">Lokasi</th>
-                                    <th className="px-4 py-3">Package</th>
-                                    <th className="px-4 py-3 text-right">Total Biaya</th>
-                                    <th className="px-4 py-3 text-right">DP Dibayar</th>
-                                    <th className="px-4 py-3 text-center">Bukti Bayar</th>
-                                    <th className="px-4 py-3 text-center">Aksi</th>
+                                    <th className="px-4 py-3 text-center w-12">{tableText('number', 'No')}</th>
+                                    <th className="px-4 py-3">{tableText('date', 'Tanggal Booking')}</th>
+                                    <th className="px-4 py-3">{tableText('client', 'Nama Pengantin')}</th>
+                                    <th className="px-4 py-3">{tableText('event', 'Nama Acara')}</th>
+                                    <th className="px-4 py-3">{tableText('type', 'Jenis Acara')}</th>
+                                    <th className="px-4 py-3">{tableText('location', 'Lokasi')}</th>
+                                    <th className="px-4 py-3">{tableText('package', 'Package')}</th>
+                                    <th className="px-4 py-3 text-right">{tableText('total', 'Total Biaya')}</th>
+                                    <th className="px-4 py-3 text-right">{tableText('deposit', 'DP Dibayar')}</th>
+                                    <th className="px-4 py-3 text-center">{tableText('proof', 'Bukti Bayar')}</th>
+                                    <th className="px-4 py-3 text-center">{tableText('actions', 'Aksi')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-brand-border">

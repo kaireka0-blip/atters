@@ -5,6 +5,7 @@ import { getPublicGallery } from '../../../services/galleries';
 import { getPublicContactProfile } from '../../../services/profile';
 import { cleanPhoneNumber } from '../../../constants';
 import { useSupabaseRealtimeRefresh } from '../../../hooks/useSupabaseRealtimeRefresh';
+import { customizeUiText, useUiTextOverrides } from '../../../utils/uiTextCustomization';
 
 interface PublicGalleryProps {
     galleryId: string;
@@ -27,6 +28,8 @@ const sanitizeImageUrl = (url: string): string => {
 };
 
 const PublicGallery: React.FC<PublicGalleryProps> = ({ galleryId }) => {
+    const uiTextOverrides = useUiTextOverrides();
+    const text = (key: string, fallback: string) => customizeUiText(`public.gallery.${key}`, fallback, uiTextOverrides);
     // Hooks
     const [gallery, setGallery] = useState<Gallery | null>(null);
     const [profile, setProfile] = useState<Profile | null>(null);
@@ -290,7 +293,7 @@ const PublicGallery: React.FC<PublicGalleryProps> = ({ galleryId }) => {
                                             aria-busy={isDownloadingPdf}
                                             className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-5 py-3 font-semibold text-white shadow-sm transition-colors hover:bg-gray-800 disabled:cursor-wait disabled:opacity-70"
                                         >
-                                            {isDownloadingPdf ? 'Mengunduh PDF...' : 'Download Pricelist PDF'}
+                                            {isDownloadingPdf ? 'Mengunduh PDF...' : text('download', 'Download Pricelist PDF')}
                                         </button>
                                     )}
                                 </div>
@@ -322,10 +325,10 @@ const PublicGallery: React.FC<PublicGalleryProps> = ({ galleryId }) => {
                 target={opensExternalBooking ? '_blank' : undefined}
                 rel={opensExternalBooking ? 'noopener noreferrer' : undefined}
                 className="fixed bottom-4 right-4 z-40 inline-flex items-center gap-2 rounded-full bg-black px-5 py-3 text-sm font-semibold text-white shadow-lg ring-1 ring-white/30 transition-colors hover:bg-gray-800 sm:bottom-6 sm:right-6"
-                aria-label="Booking Sekarang"
+                aria-label={text('bookingCta', 'Booking Sekarang')}
             >
                 <CalendarDays className="h-4 w-4 shrink-0" aria-hidden="true" />
-                Booking Sekarang
+                {text('bookingCta', 'Booking Sekarang')}
             </a>
 
             {/* Lightbox */}

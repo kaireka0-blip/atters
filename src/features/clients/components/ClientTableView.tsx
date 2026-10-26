@@ -4,6 +4,7 @@ import { Client, Project, ClientStatus } from '../../../types';
 import { ClientWithSummary } from '../hooks/useClients';
 import { formatCurrency, getPaymentStatusClass } from '../utils/clientHelpers';
 import { MobileExpandableExtra } from '../../../components/ui/MobileProgressiveDisclosure';
+import { customizeUiText, useUiTextOverrides } from '../../../utils/uiTextCustomization';
 
 export type ClientTabType = 'active' | 'inactive' | 'all' | 'no-date' | 'this-month';
 
@@ -28,6 +29,8 @@ export const ClientTableView: React.FC<ClientTableViewProps> = ({
     onDeleteClient,
     onAddProject,
 }) => {
+    const uiTextOverrides = useUiTextOverrides();
+    const text = (key: string, fallback: string) => customizeUiText(`table.clients.${key}`, fallback, uiTextOverrides);
     const activeClients = filteredClientData.filter(c => c.status === ClientStatus.ACTIVE);
     const inactiveClients = filteredClientData.filter(c => c.status !== ClientStatus.ACTIVE);
     const noDateClients = filteredClientData.filter(client => {
@@ -225,13 +228,13 @@ export const ClientTableView: React.FC<ClientTableViewProps> = ({
                 <table className="w-full text-xs lg:text-sm text-left">
                     <thead className="text-[11px] font-bold text-[#5A6A85] uppercase tracking-wider bg-[#F4F6F9] border-b border-[#EAEFF4]">
                         <tr>
-                            <th className="px-3 lg:px-4 py-3.5 text-center w-10">No</th>
-                            <th className="px-3 lg:px-6 py-3.5">Pengantin</th>
-                            <th className="px-3 lg:px-6 py-3.5">Status</th>
-                            <th className="px-3 lg:px-6 py-3.5">Total Package</th>
-                            <th className="px-3 lg:px-6 py-3.5">Sisa Pembayaran</th>
-                            <th className="px-3 lg:px-6 py-3.5">{clientTab === 'this-month' ? 'Nama Acara Bulan Ini' : 'Acara Pernikahan Terbaru'}</th>
-                            <th className="px-3 lg:px-6 py-3.5 text-center">Aksi</th>
+                            <th className="px-3 lg:px-4 py-3.5 text-center w-10">{text('number', 'No')}</th>
+                            <th className="px-3 lg:px-6 py-3.5">{text('client', 'Pengantin')}</th>
+                            <th className="px-3 lg:px-6 py-3.5">{text('status', 'Status')}</th>
+                            <th className="px-3 lg:px-6 py-3.5">{text('package', 'Total Package')}</th>
+                            <th className="px-3 lg:px-6 py-3.5">{text('balance', 'Sisa Pembayaran')}</th>
+                            <th className="px-3 lg:px-6 py-3.5">{clientTab === 'this-month' ? text('eventThisMonth', 'Nama Acara Bulan Ini') : text('event', 'Acara Pernikahan Terbaru')}</th>
+                            <th className="px-3 lg:px-6 py-3.5 text-center">{text('actions', 'Aksi')}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-[#EAEFF4]">

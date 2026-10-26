@@ -25,6 +25,7 @@ import { upsertProfile } from '../../services/profile';
 import { listGalleries } from '../../services/galleries';
 import { buildPublicShareUrl, getGalleryPublicRouteId, toPublicNameSlug } from '../../utils/publicRouting';
 import { generateUUID } from '../../utils/uuid';
+import { customizeUiText, useUiTextOverrides } from '../../utils/uiTextCustomization';
 
 const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
@@ -664,6 +665,8 @@ interface LeadsProps {
 export const Leads: React.FC<LeadsProps> = ({
     leads, setLeads, clients, setClients, projects, setProjects, packages, addOns, transactions, setTransactions, userProfile, setProfile, showNotification, handleNavigation, cards, setCards, pockets, setPockets, promoCodes, setPromoCodes, totals, initialAction, setInitialAction
 }) => {
+    const uiTextOverrides = useUiTextOverrides();
+    const tableText = (key: string, fallback: string) => customizeUiText(`table.leads.${key}`, fallback, uiTextOverrides);
     const queryClient = useQueryClient();
     const [draggedLeadId, setDraggedLeadId] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -1753,15 +1756,15 @@ export const Leads: React.FC<LeadsProps> = ({
                                 <table className="w-full text-sm !border-0">
                                     <thead>
                                         <tr className="bg-brand-bg text-left">
-                                            <th className="px-4 py-3 text-xs font-bold text-brand-text-secondary uppercase tracking-wider !border-0 border-b border-brand-border w-10">#</th>
-                                            <th className="px-4 py-3 text-xs font-bold text-brand-text-secondary uppercase tracking-wider !border-0 border-b border-brand-border">Nama</th>
-                                            <th className="px-4 py-3 text-xs font-bold text-brand-text-secondary uppercase tracking-wider !border-0 border-b border-brand-border hidden sm:table-cell">WA / Kontak</th>
-                                            <th className="px-4 py-3 text-xs font-bold text-brand-text-secondary uppercase tracking-wider !border-0 border-b border-brand-border hidden md:table-cell">Lokasi</th>
-                                            <th className="px-4 py-3 text-xs font-bold text-brand-text-secondary uppercase tracking-wider !border-0 border-b border-brand-border hidden lg:table-cell">Sumber</th>
-                                            <th className="px-4 py-3 text-xs font-bold text-brand-text-secondary uppercase tracking-wider !border-0 border-b border-brand-border hidden lg:table-cell">Tgl Kontak</th>
-                                            <th className="px-4 py-3 text-xs font-bold text-brand-text-secondary uppercase tracking-wider !border-0 border-b border-brand-border hidden xl:table-cell">Tgl Acara</th>
-                                            <th className="px-4 py-3 text-xs font-bold text-brand-text-secondary uppercase tracking-wider !border-0 border-b border-brand-border">Status</th>
-                                            <th className="px-4 py-3 text-xs font-bold text-brand-text-secondary uppercase tracking-wider !border-0 border-b border-brand-border text-right">Aksi</th>
+                                            <th className="px-4 py-3 text-xs font-bold text-brand-text-secondary uppercase tracking-wider !border-0 border-b border-brand-border w-10">{tableText('number', '#')}</th>
+                                            <th className="px-4 py-3 text-xs font-bold text-brand-text-secondary uppercase tracking-wider !border-0 border-b border-brand-border">{tableText('name', 'Nama')}</th>
+                                            <th className="px-4 py-3 text-xs font-bold text-brand-text-secondary uppercase tracking-wider !border-0 border-b border-brand-border hidden sm:table-cell">{tableText('contact', 'WA / Kontak')}</th>
+                                            <th className="px-4 py-3 text-xs font-bold text-brand-text-secondary uppercase tracking-wider !border-0 border-b border-brand-border hidden md:table-cell">{tableText('location', 'Lokasi')}</th>
+                                            <th className="px-4 py-3 text-xs font-bold text-brand-text-secondary uppercase tracking-wider !border-0 border-b border-brand-border hidden lg:table-cell">{tableText('source', 'Sumber')}</th>
+                                            <th className="px-4 py-3 text-xs font-bold text-brand-text-secondary uppercase tracking-wider !border-0 border-b border-brand-border hidden lg:table-cell">{tableText('contactDate', 'Tgl Kontak')}</th>
+                                            <th className="px-4 py-3 text-xs font-bold text-brand-text-secondary uppercase tracking-wider !border-0 border-b border-brand-border hidden xl:table-cell">{tableText('eventDate', 'Tgl Acara')}</th>
+                                            <th className="px-4 py-3 text-xs font-bold text-brand-text-secondary uppercase tracking-wider !border-0 border-b border-brand-border">{tableText('status', 'Status')}</th>
+                                            <th className="px-4 py-3 text-xs font-bold text-brand-text-secondary uppercase tracking-wider !border-0 border-b border-brand-border text-right">{tableText('actions', 'Aksi')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>

@@ -60,6 +60,7 @@ export const initialFormState = {
     packageId: '',
     selectedAdditionalPackageIds: [] as string[],
     selectedAdditionalPackagePriceOverrides: {} as Record<string, number>,
+    selectedAdditionalPackageDurationSelections: {} as Record<string, string>,
     selectedAddOnIds: [] as string[],
     selectedAddOnPriceOverrides: {} as Record<string, number>,
     customItems: [] as CustomFormItem[],

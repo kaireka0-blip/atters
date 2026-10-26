@@ -3,12 +3,14 @@ import { ExternalLink, MessageCircle } from 'lucide-react';
 import { BioLinkPage as BioLinkPageData } from '../../types';
 import { getBioLinkPage } from '../../services/bioLinks';
 import { useSupabaseRealtimeRefresh } from '../../hooks/useSupabaseRealtimeRefresh';
+import { customizeUiText, useUiTextOverrides } from '../../utils/uiTextCustomization';
 
 interface BioLinkPageProps {
   slug?: string;
 }
 
 const BioLinkPage: React.FC<BioLinkPageProps> = ({ slug }) => {
+  const uiTextOverrides = useUiTextOverrides();
   const [page, setPage] = useState<BioLinkPageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -34,14 +36,14 @@ const BioLinkPage: React.FC<BioLinkPageProps> = ({ slug }) => {
   }, [slug, refreshVersion]);
 
   if (loading) {
-    return <div className="flex min-h-screen items-center justify-center bg-[#f8f8f8] text-sm text-[#737373]">Memuat halaman...</div>;
+    return <div className="flex min-h-screen items-center justify-center bg-[#f8f8f8] text-sm text-[#737373]">{customizeUiText('links.public.loading', 'Memuat halaman...', uiTextOverrides)}</div>;
   }
 
   if (error || !page) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#f8f8f8] px-6 text-center">
         <div className="max-w-sm">
-          <h1 className="text-xl font-semibold text-[#171717]">{error ? 'Halaman belum siap' : 'Link tidak ditemukan'}</h1>
+          <h1 className="text-xl font-semibold text-[#171717]">{error ? 'Halaman belum siap' : customizeUiText('links.public.notFound', 'Link tidak ditemukan', uiTextOverrides)}</h1>
           <p className="mt-2 text-sm leading-6 text-[#737373]">{error || 'Halaman ini tidak tersedia atau belum dipublikasikan.'}</p>
         </div>
       </main>

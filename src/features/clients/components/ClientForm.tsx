@@ -216,7 +216,13 @@ const ClientForm: React.FC<ClientFormProps> = ({
 
         const additionalPackagesPrice = packages
             .filter(pkg => formData.selectedAdditionalPackageIds?.includes(pkg.id))
-            .reduce((sum, pkg) => sum + (formData.selectedAdditionalPackagePriceOverrides?.[pkg.id] ?? pkg.price), 0);
+            .reduce((sum, pkg) => {
+                const durationSelection = formData.selectedAdditionalPackageDurationSelections?.[pkg.id];
+                const durationOption = pkg.durationOptions?.find(option => option.label === durationSelection)
+                    || pkg.durationOptions?.find(option => option.default)
+                    || pkg.durationOptions?.[0];
+                return sum + (formData.selectedAdditionalPackagePriceOverrides?.[pkg.id] ?? durationOption?.price ?? pkg.price);
+            }, 0);
 
         const customItemsPrice = (formData.customItems || [])
             .reduce((sum, item) => sum + (Number(item.price) || 0), 0);
@@ -252,7 +258,7 @@ const ClientForm: React.FC<ClientFormProps> = ({
             discountAmount,
             discountApplied
         };
-    }, [formData.packageId, formData.unitPrice, formData.selectedAddOnIds, formData.selectedAddOnPriceOverrides, formData.selectedAdditionalPackageIds, formData.selectedAdditionalPackagePriceOverrides, formData.customItems, formData.preservedProjectExtras, formData.dp, formData.promoCodeId, packages, addOns, promoCodes]);
+    }, [formData.packageId, formData.unitPrice, formData.selectedAddOnIds, formData.selectedAddOnPriceOverrides, formData.selectedAdditionalPackageIds, formData.selectedAdditionalPackagePriceOverrides, formData.selectedAdditionalPackageDurationSelections, formData.customItems, formData.preservedProjectExtras, formData.dp, formData.promoCodeId, packages, addOns, promoCodes]);
 
     return (
         <form onSubmit={handleInternalSubmit} className="form-compact form-compact--ios-scale space-y-5">
@@ -624,46 +630,119 @@ const ClientForm: React.FC<ClientFormProps> = ({
                         <div className="space-y-2">
                             <label className="block text-xs font-semibold text-black">Package Tambahan (Opsional)</label>
                             <div className="space-y-2">
-                                {visiblePackages.filter(p => p.id !== formData.packageId).map(pkg => (
-                                    <label
-                                        key={pkg.id}
-                                        className={`grid w-full min-w-0 grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-x-2 gap-y-0.5 rounded-lg border bg-white p-2 text-left shadow-sm transition hover:border-neutral-500 hover:bg-neutral-50 cursor-pointer sm:gap-3 sm:rounded-xl sm:p-2.5 ${formData.selectedAdditionalPackageIds?.includes(pkg.id) ? 'border-neutral-900 ring-1 ring-neutral-300' : 'border-neutral-200'
-                                            }`}
-                                    >
-                                        {pkg.coverImage ? (
-                                            <img src={pkg.coverImage} alt="" className="row-span-2 h-10 w-10 shrink-0 rounded-lg object-cover sm:row-span-1 sm:h-12 sm:w-12" loading="lazy" decoding="async" />
-                                        ) : (
-                                            <span className="row-span-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-black sm:row-span-1 sm:h-12 sm:w-12">
-                                                <PackageIcon className="h-5 w-5" aria-hidden="true" />
-                                            </span>
-                                        )}
-                                        <span className="min-w-0 flex-1">
-                                            <span className="block text-sm font-bold text-slate-900">{pkg.name}{pkg.region ? ` (${pkg.region})` : ''}</span>
-                                            <span className="block text-[11px] font-extrabold text-neutral-950 sm:text-xs">{formatCurrency(formData.selectedAdditionalPackagePriceOverrides?.[pkg.id] ?? pkg.price)}</span>
-                                        </span>
-                                        <div className="col-start-3 row-span-2 flex items-center justify-end px-1">
-                                            <input
-                                                type="checkbox"
-                                                id={`addpkg-${pkg.id}`}
-                                                name="additionalPackages"
-                                                checked={formData.selectedAdditionalPackageIds?.includes(pkg.id)}
-                                                onChange={(e) => {
-                                                    const checked = e.target.checked;
-                                                    setFormData(prev => ({
-                                                        ...prev,
-                                                        selectedAdditionalPackageIds: checked
-                                                            ? [...(prev.selectedAdditionalPackageIds || []), pkg.id]
-                                                            : (prev.selectedAdditionalPackageIds || []).filter(id => id !== pkg.id),
-                                                        selectedAdditionalPackagePriceOverrides: checked
-                                                            ? prev.selectedAdditionalPackagePriceOverrides
-                                                            : Object.fromEntries(Object.entries(prev.selectedAdditionalPackagePriceOverrides || {}).filter(([id]) => id !== pkg.id)),
-                                                    }));
-                                                }}
-                                                className="h-4 w-4 text-black rounded focus:ring-neutral-900 flex-shrink-0 cursor-pointer"
-                                            />
-                                        </div>
-                                    </label>
-                                ))}
+                                {visiblePackages.filter(p => p.id !== formData.packageId).map(pkg => {
+                                    const isSelected = formData.selectedAdditionalPackageIds?.includes(pkg.id) || false;
+                                    const durationOptions = pkg.durationOptions || [];
+                                    const selectedDuration = durationOptions.find(option => option.label === formData.selectedAdditionalPackageDurationSelections?.[pkg.id])
+                                        || durationOptions.find(option => option.default)
+                                        || durationOptions[0];
+                                    const selectedPrice = formData.selectedAdditionalPackagePriceOverrides?.[pkg.id] ?? selectedDuration?.price ?? pkg.price;
+                                    const photographers = selectedDuration?.photographers || pkg.photographers;
+                                    const videographers = selectedDuration?.videographers || pkg.videographers;
+                                    const processingTime = selectedDuration?.processingTime || pkg.processingTime;
+                                    const digitalItems = (selectedDuration?.digitalItems?.filter(Boolean).length ? selectedDuration.digitalItems : pkg.digitalItems)?.filter(Boolean) || [];
+                                    const physicalItems = (selectedDuration?.physicalItems?.filter(item => item?.name).length ? selectedDuration.physicalItems : pkg.physicalItems)?.filter(item => item?.name) || [];
+                                    const hasDetails = photographers || videographers || processingTime || digitalItems.length > 0 || physicalItems.length > 0;
+
+                                    return (
+                                        <React.Fragment key={pkg.id}>
+                                            <label className={`grid w-full min-w-0 grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-x-2 gap-y-0.5 rounded-lg border bg-white p-2 text-left shadow-sm transition hover:border-neutral-500 hover:bg-neutral-50 cursor-pointer sm:gap-3 sm:rounded-xl sm:p-2.5 ${isSelected ? 'border-neutral-900 ring-1 ring-neutral-300' : 'border-neutral-200'}`}>
+                                                {pkg.coverImage ? (
+                                                    <img src={pkg.coverImage} alt="" className="row-span-2 h-10 w-10 shrink-0 rounded-lg object-cover sm:row-span-1 sm:h-12 sm:w-12" loading="lazy" decoding="async" />
+                                                ) : (
+                                                    <span className="row-span-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-black sm:row-span-1 sm:h-12 sm:w-12">
+                                                        <PackageIcon className="h-5 w-5" aria-hidden="true" />
+                                                    </span>
+                                                )}
+                                                <span className="min-w-0 flex-1">
+                                                    <span className="block text-sm font-bold text-slate-900">{pkg.name}{pkg.region ? ` (${pkg.region})` : ''}</span>
+                                                    {durationOptions.length > 1 && !isSelected && <span className="block text-[9px] font-semibold text-neutral-500">Mulai dari</span>}
+                                                    <span className="block text-[11px] font-extrabold text-neutral-950 sm:text-xs">{formatCurrency(isSelected ? selectedPrice : durationOptions.length > 1 ? Math.min(...durationOptions.map(option => Number(option.price) || 0)) : pkg.price)}</span>
+                                                </span>
+                                                <div className="col-start-3 row-span-2 flex items-center justify-end px-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        id={`addpkg-${pkg.id}`}
+                                                        name="additionalPackages"
+                                                        checked={isSelected}
+                                                        onChange={event => {
+                                                            const checked = event.target.checked;
+                                                            setFormData(previous => {
+                                                                const durationSelections = { ...(previous.selectedAdditionalPackageDurationSelections || {}) };
+                                                                const priceOverrides = { ...(previous.selectedAdditionalPackagePriceOverrides || {}) };
+                                                                const option = durationOptions.find(item => item.default) || durationOptions[0];
+                                                                if (checked && option) {
+                                                                    durationSelections[pkg.id] = option.label;
+                                                                    priceOverrides[pkg.id] = Number(option.price);
+                                                                } else if (!checked) {
+                                                                    delete durationSelections[pkg.id];
+                                                                    delete priceOverrides[pkg.id];
+                                                                }
+                                                                return {
+                                                                    ...previous,
+                                                                    selectedAdditionalPackageIds: checked
+                                                                        ? [...new Set([...(previous.selectedAdditionalPackageIds || []), pkg.id])]
+                                                                        : (previous.selectedAdditionalPackageIds || []).filter(id => id !== pkg.id),
+                                                                    selectedAdditionalPackageDurationSelections: durationSelections,
+                                                                    selectedAdditionalPackagePriceOverrides: priceOverrides,
+                                                                };
+                                                            });
+                                                        }}
+                                                        className="h-4 w-4 text-black rounded focus:ring-neutral-900 flex-shrink-0 cursor-pointer"
+                                                    />
+                                                </div>
+                                            </label>
+                                            {isSelected && (
+                                                <div className="space-y-2 rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+                                                    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                                                        <p className="text-xs font-bold text-black">Detail Package: {pkg.name}{selectedDuration && <span className="font-normal text-neutral-600"> — {selectedDuration.label}</span>}</p>
+                                                        <p className="text-xs font-extrabold text-black">{formatCurrency(selectedPrice)}</p>
+                                                    </div>
+                                                    {hasDetails ? (
+                                                        <ul className="space-y-1 text-[11px] text-public-text-secondary">
+                                                            {photographers && <li>• {photographers}</li>}
+                                                            {videographers && <li>• {videographers}</li>}
+                                                            {processingTime && <li>• Waktu pengerjaan: {processingTime}</li>}
+                                                            {digitalItems.map((item, index) => <li key={`digital-${index}`}>• {item}</li>)}
+                                                            {physicalItems.map((item, index) => <li key={`physical-${index}`}>• {item.name}</li>)}
+                                                        </ul>
+                                                    ) : <p className="text-[11px] italic text-public-text-secondary">Rincian package belum diatur.</p>}
+                                                    {durationOptions.length > 1 && (
+                                                        <fieldset className="space-y-1 border-t border-neutral-200 pt-2">
+                                                            <legend className="text-[11px] font-semibold text-black">Pilih jam kerja dan harga</legend>
+                                                            {durationOptions.map(option => (
+                                                                <label key={option.label} className={`flex min-h-10 cursor-pointer items-center justify-between gap-3 rounded-md border px-2.5 py-2 text-xs ${selectedDuration?.label === option.label ? 'border-neutral-900 bg-white' : 'border-neutral-200 bg-neutral-100 hover:bg-white'}`}>
+                                                                    <span>{option.label}</span>
+                                                                    <span className="flex shrink-0 items-center gap-2.5">
+                                                                        <span className="font-bold text-black">{formatCurrency(option.price)}</span>
+                                                                        <input
+                                                                            type="radio"
+                                                                            name={`additionalPackageDuration-${pkg.id}`}
+                                                                            value={option.label}
+                                                                            checked={selectedDuration?.label === option.label}
+                                                                            onChange={() => setFormData(previous => ({
+                                                                                ...previous,
+                                                                                selectedAdditionalPackageDurationSelections: {
+                                                                                    ...(previous.selectedAdditionalPackageDurationSelections || {}),
+                                                                                    [pkg.id]: option.label,
+                                                                                },
+                                                                                selectedAdditionalPackagePriceOverrides: {
+                                                                                    ...(previous.selectedAdditionalPackagePriceOverrides || {}),
+                                                                                    [pkg.id]: Number(option.price),
+                                                                                },
+                                                                            }))}
+                                                                            className="h-3.5 w-3.5 accent-black"
+                                                                        />
+                                                                    </span>
+                                                                </label>
+                                                            ))}
+                                                        </fieldset>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </React.Fragment>
+                                    );
+                                })}
                             </div>
                         </div>
                     )}

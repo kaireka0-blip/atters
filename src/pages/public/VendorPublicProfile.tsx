@@ -4,6 +4,7 @@ import { getVendorProfile } from '../../services/vendorProfile';
 import { listVendorPortfolios } from '../../services/vendorPortfolios';
 import { getEmbedVideoUrl } from '../../utils/videoUtils';
 import { useSupabaseRealtimeRefresh } from '../../hooks/useSupabaseRealtimeRefresh';
+import { customizeUiText, useUiTextOverrides } from '../../utils/uiTextCustomization';
 
 const FAQ_OPEN_DEFAULT = new Set<string>();
 
@@ -21,6 +22,8 @@ const handleProfileImageError = (event: React.SyntheticEvent<HTMLImageElement>) 
 };
 
 const VendorPublicProfile: React.FC = () => {
+    const uiTextOverrides = useUiTextOverrides();
+    const text = (key: string, fallback: string) => customizeUiText(`public.vendorProfile.${key}`, fallback, uiTextOverrides);
     const [profile, setProfile] = useState<VendorProfile | null>(null);
     const [portfolios, setPortfolios] = useState<VendorPortfolio[]>([]);
     const [loading, setLoading] = useState(true);
@@ -284,7 +287,7 @@ const VendorPublicProfile: React.FC = () => {
                 </div>
 
                 <div className="vendor-profile-hero-content relative z-10 px-5 sm:px-10 md:px-16 pb-12 sm:pb-16 md:pb-24 max-w-4xl">
-                    <p className="text-white/75 text-[10px] sm:text-sm font-medium tracking-[0.22em] uppercase mb-3 sm:mb-5">Vendor Profile</p>
+                    <p className="text-white/75 text-[10px] sm:text-sm font-medium tracking-[0.22em] uppercase mb-3 sm:mb-5">{text('title', 'Vendor Profile')}</p>
                     <h1 className="vendor-profile-hero-title text-white text-3xl sm:text-5xl md:text-7xl font-medium leading-[1.05] tracking-tight mb-4 sm:mb-5">
                         {profile?.hero_title || 'Capture Every Moment'}
                     </h1>

@@ -3,8 +3,11 @@ import { Check, ArrowRight, MessageCircle } from 'lucide-react';
 import { LeadStatus, ContactChannel, PublicLeadFormProps, ViewType } from '../../../types';
 import { createLead } from '../../../services/leads';
 import { cleanPhoneNumber } from '../../../constants';
+import { customizeUiText, useUiTextOverrides } from '../../../utils/uiTextCustomization';
 
 const PublicLeadForm: React.FC<PublicLeadFormProps> = ({ setLeads, userProfile, showNotification, addNotification }) => {
+    const uiTextOverrides = useUiTextOverrides();
+    const text = (key: string, fallback: string) => customizeUiText(`public.inquiry.${key}`, fallback, uiTextOverrides);
     const referralCode = useMemo(() => {
         const hash = window.location.hash || '';
         const parts = hash.split('/public-lead-form/');
@@ -180,8 +183,8 @@ const PublicLeadForm: React.FC<PublicLeadFormProps> = ({ setLeads, userProfile, 
                 </div>
                 {/* Header */}
                 <div className="pt-9 pb-6 px-6 sm:px-10 text-center">
-                    <p className="text-[10px] uppercase tracking-[0.25em] text-zinc-400 font-medium mb-1.5">
-                        Inquiry
+                        <p className="text-[10px] uppercase tracking-[0.25em] text-zinc-400 font-medium mb-1.5">
+                            {text('title', 'INQUIRY')}
                     </p>
                     <h1 className="text-2xl text-zinc-900 tracking-wider font-normal">
                         {userProfile.companyName || 'Vena Pictures'}
@@ -195,7 +198,7 @@ const PublicLeadForm: React.FC<PublicLeadFormProps> = ({ setLeads, userProfile, 
                         {/* Name */}
                         <div>
                             <label htmlFor="name" className="block text-[10px] font-bold text-zinc-500 mb-1 uppercase tracking-widest">
-                                Nama
+                                {text('name', 'Nama')}
                             </label>
                             <input
                                 type="text"
@@ -213,7 +216,7 @@ const PublicLeadForm: React.FC<PublicLeadFormProps> = ({ setLeads, userProfile, 
                         {/* WhatsApp */}
                         <div>
                             <label htmlFor="whatsapp" className="block text-[10px] font-bold text-zinc-500 mb-1 uppercase tracking-widest">
-                                WhatsApp
+                                {text('whatsapp', 'WhatsApp')}
                             </label>
                             <div className="flex rounded-lg border border-stone-300 focus-within:border-zinc-500 transition-all overflow-hidden" style={{ backgroundColor: '#ffffff' }}>
                                 <span className="px-3 py-2 text-xs text-zinc-500 bg-stone-100 border-r border-stone-300 select-none">
@@ -236,7 +239,7 @@ const PublicLeadForm: React.FC<PublicLeadFormProps> = ({ setLeads, userProfile, 
                         {/* Service Type */}
                         <div>
                             <label htmlFor="serviceType" className="block text-[10px] font-bold text-zinc-500 mb-1 uppercase tracking-widest">
-                                Kategori Acara
+                                {text('category', 'Kategori Acara')}
                             </label>
                             <select
                                 id="serviceType"
@@ -255,7 +258,7 @@ const PublicLeadForm: React.FC<PublicLeadFormProps> = ({ setLeads, userProfile, 
                         {/* Sumber */}
                         <div>
                             <label htmlFor="contactChannel" className="block text-[10px] font-bold text-zinc-500 mb-1 uppercase tracking-widest">
-                                Dari Mana Kamu Mengetahui Kami
+                                {text('source', 'Dari mana kamu mengetahui kami')}
                             </label>
                             <select
                                 id="contactChannel"
@@ -275,7 +278,7 @@ const PublicLeadForm: React.FC<PublicLeadFormProps> = ({ setLeads, userProfile, 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                                 <label htmlFor="eventLocation" className="block text-[10px] font-bold text-zinc-500 mb-1 uppercase tracking-widest">
-                                    Lokasi Acara
+                                    {text('location', 'Lokasi Acara')}
                                 </label>
                                 <input
                                     type="text"
@@ -291,7 +294,7 @@ const PublicLeadForm: React.FC<PublicLeadFormProps> = ({ setLeads, userProfile, 
                             </div>
                             <div>
                                 <label htmlFor="eventDate" className="block text-[10px] font-bold text-zinc-500 mb-1 uppercase tracking-widest">
-                                    Tanggal Acara
+                                    {text('date', 'Tanggal Acara')}
                                 </label>
                                 <input
                                     type="date"
@@ -310,7 +313,7 @@ const PublicLeadForm: React.FC<PublicLeadFormProps> = ({ setLeads, userProfile, 
                         {/* Notes */}
                         <div>
                             <label htmlFor="notes" className="block text-[10px] font-bold text-zinc-500 mb-1 uppercase tracking-widest">
-                                Catatan
+                                {text('notes', 'Catatan')}
                             </label>
                             <textarea
                                 id="notes"
@@ -331,7 +334,7 @@ const PublicLeadForm: React.FC<PublicLeadFormProps> = ({ setLeads, userProfile, 
                                 disabled={isSubmitting}
                                 className="w-full bg-zinc-900 hover:bg-zinc-700 text-white py-2.5 px-4 rounded-lg font-bold text-[10px] tracking-wider uppercase transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
                             >
-                                {isSubmitting ? 'Mengirim...' : 'Kirim Pesan'}
+                                {isSubmitting ? 'Mengirim...' : text('submit', 'Kirim Pesan')}
                             </button>
                         </div>
                     </form>
@@ -344,7 +347,7 @@ const PublicLeadForm: React.FC<PublicLeadFormProps> = ({ setLeads, userProfile, 
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 text-[11px] text-zinc-400 hover:text-zinc-700 transition-colors"
                         >
-                            <span>Atau chat via WhatsApp</span>
+                            <span>{text('whatsappLink', 'Atau chat via WhatsApp')}</span>
                             <ArrowRight className="w-3.5 h-3.5" />
                         </a>
                     </div>

@@ -5,6 +5,7 @@ import { EyeIcon } from '../../../constants';
 import { CalendarDays, PencilIcon, Trash2Icon, ArrowDownIcon } from 'lucide-react';
 import { getStatusColor, getStatusClass, getSubStatusText, getDisplayProgress } from '../utils/projectHelpers';
 import ProjectClientAvatar from './ProjectClientAvatar';
+import { customizeUiText, useUiTextOverrides } from '../../../utils/uiTextCustomization';
 
 export interface ProjectListViewProps {
     projects: Project[];
@@ -21,6 +22,8 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
     projects, handleOpenDetailModal, handleOpenForm, handleProjectDelete,
     config, clients, handleQuickStatusChange, handleSendMessage
 }) => {
+    const uiTextOverrides = useUiTextOverrides();
+    const tableText = (key: string, fallback: string) => customizeUiText(`table.projects.${key}`, fallback, uiTextOverrides);
     const ProgressBar: React.FC<{ progress: number, status: string, config: ProjectStatusConfig[] }> = ({ progress, status, config }) => (
         <div className="w-full bg-[#F4F6F9] rounded-full h-2 overflow-hidden">
             <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progress}%`, backgroundColor: getStatusColor(status, config) }}></div>
@@ -53,13 +56,13 @@ export const ProjectListView: React.FC<ProjectListViewProps> = ({
                 <table className="w-full text-xs lg:text-sm text-left">
                     <thead className="text-xs text-[#5A6A85] uppercase bg-[#F4F6F9]/80 border-b border-[#EAEFF4]">
                         <tr>
-                            <th className="px-3 lg:px-4 py-2.5 font-bold tracking-wider text-center w-12">No</th>
-                            <th className="px-3 lg:px-6 py-2.5 font-bold tracking-wider">Nama Acara Pernikahan</th>
-                            <th className="px-3 lg:px-6 py-2.5 font-bold tracking-wider">Pengantin</th>
-                            <th className="px-3 lg:px-6 py-2.5 font-bold tracking-wider">Tanggal</th>
-                            <th className="px-3 lg:px-6 py-2.5 font-bold tracking-wider min-w-[140px] lg:min-w-[200px]">Progress</th>
-                            <th className="px-3 lg:px-6 py-2.5 font-bold tracking-wider">Tim</th>
-                            <th className="px-3 lg:px-6 py-2.5 font-bold tracking-wider text-center">Aksi</th>
+                            <th className="px-3 lg:px-4 py-2.5 font-bold tracking-wider text-center w-12">{tableText('number', 'No')}</th>
+                            <th className="px-3 lg:px-6 py-2.5 font-bold tracking-wider">{tableText('event', 'Nama Acara Pernikahan')}</th>
+                            <th className="px-3 lg:px-6 py-2.5 font-bold tracking-wider">{tableText('client', 'Pengantin')}</th>
+                            <th className="px-3 lg:px-6 py-2.5 font-bold tracking-wider">{tableText('date', 'Tanggal')}</th>
+                            <th className="px-3 lg:px-6 py-2.5 font-bold tracking-wider min-w-[140px] lg:min-w-[200px]">{tableText('progress', 'Progress')}</th>
+                            <th className="px-3 lg:px-6 py-2.5 font-bold tracking-wider">{tableText('team', 'Tim')}</th>
+                            <th className="px-3 lg:px-6 py-2.5 font-bold tracking-wider text-center">{tableText('actions', 'Aksi')}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-[#EAEFF4]">

@@ -67,6 +67,11 @@ export function hydrateForm<T extends Record<string, any>>(base: T, patch?: Reco
             if (typeof value === 'number' && Number.isFinite(value)) merged[key] = value;
             return;
         }
+        if (baseValue && typeof baseValue === 'object' && value && typeof value === 'object'
+            && !Array.isArray(baseValue) && !Array.isArray(value)) {
+            merged[key] = { ...baseValue, ...value };
+            return;
+        }
         if (typeof baseValue === 'string' && typeof value === 'string') {
             merged[key] = value;
             return;
@@ -94,7 +99,14 @@ export function inheritFromPackagesDraft(draft: PublicPackagesDraft | null): Rec
         patch.selectedAddOnIds = draft.form.selectedAddOnIds;
     }
     const additionalIds = (draft.optionalPackages || []).map(item => item?.id).filter(Boolean);
-    if (additionalIds.length > 0) patch.selectedAdditionalPackageIds = additionalIds;
+    if (additionalIds.length > 0) {
+        patch.selectedAdditionalPackageIds = additionalIds;
+        patch.additionalPackageDurationSelections = Object.fromEntries(
+            (draft.optionalPackages || [])
+                .filter(item => item?.id && item.selectedDuration)
+                .map(item => [item.id, item.selectedDuration]),
+        );
+    }
     return Object.keys(patch).length > 0 ? patch : null;
 }
 

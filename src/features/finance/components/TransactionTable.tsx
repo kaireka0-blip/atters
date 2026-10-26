@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Search, Plus, FileText, Eye, Pencil, Trash2, X } from 'lucide-react';
 import { Transaction, TransactionType } from '../../../types';
 import { formatCurrency } from '../../../utils/currency';
+import { customizeUiText, useUiTextOverrides } from '../../../utils/uiTextCustomization';
 
 export interface TransactionTableProps {
     transactions: Transaction[];
@@ -30,6 +31,8 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     emptyMessage = 'Tidak ada transaksi pada periode ini.',
     compact = false,
 }) => {
+    const uiTextOverrides = useUiTextOverrides();
+    const tableText = (key: string, fallback: string) => customizeUiText(`table.transactions.${key}`, fallback, uiTextOverrides);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedDoc, setSelectedDoc] = useState<Transaction | null>(null);
     const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
@@ -192,13 +195,13 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                         <table className="w-full text-xs lg:text-sm text-left">
                             <thead className="text-[10px] lg:text-xs uppercase bg-brand-bg/70 text-brand-text-secondary border-b border-brand-border">
                                 <tr>
-                                    <th className={`${compact ? 'p-2' : 'p-3 lg:p-4'} font-bold tracking-wider text-center w-10`}>No</th>
-                                    <th className={`${compact ? 'p-2' : 'p-3 lg:p-4'} font-bold tracking-wider`}>Tanggal</th>
-                                    <th className={`${compact ? 'p-2' : 'p-3 lg:p-4'} font-bold tracking-wider`}>Deskripsi & ID</th>
-                                    <th className={`${compact ? 'p-2' : 'p-3 lg:p-4'} font-bold tracking-wider`}>Kategori</th>
-                                    <th className={`${compact ? 'p-2' : 'p-3 lg:p-4'} font-bold tracking-wider text-right`}>Jumlah</th>
+                                    <th className={`${compact ? 'p-2' : 'p-3 lg:p-4'} font-bold tracking-wider text-center w-10`}>{tableText('number', 'No')}</th>
+                                    <th className={`${compact ? 'p-2' : 'p-3 lg:p-4'} font-bold tracking-wider`}>{tableText('date', 'Tanggal')}</th>
+                                    <th className={`${compact ? 'p-2' : 'p-3 lg:p-4'} font-bold tracking-wider`}>{tableText('description', 'Deskripsi & ID')}</th>
+                                    <th className={`${compact ? 'p-2' : 'p-3 lg:p-4'} font-bold tracking-wider`}>{tableText('category', 'Kategori')}</th>
+                                    <th className={`${compact ? 'p-2' : 'p-3 lg:p-4'} font-bold tracking-wider text-right`}>{tableText('amount', 'Jumlah')}</th>
                                     {hasActions && (
-                                        <th className={`${compact ? 'p-2' : 'p-3 lg:p-4'} font-bold tracking-wider text-right w-24`}>Aksi</th>
+                                        <th className={`${compact ? 'p-2' : 'p-3 lg:p-4'} font-bold tracking-wider text-right w-24`}>{tableText('actions', 'Aksi')}</th>
                                     )}
                                 </tr>
                             </thead>

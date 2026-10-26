@@ -134,10 +134,10 @@ const InteractiveCashflowChart: React.FC<InteractiveCashflowChartProps> = React.
                     <div className="flex items-center gap-1.5">
                         <span className="text-xs font-bold text-[#5A6A85] mr-1.5 flex items-center gap-1">
                             <Calendar className="w-3.5 h-3.5 text-[#2563EB]" />
-                            Proyeksi:
+                            Lihat ke depan:
                         </span>
                         {[
-                            { value: 0, label: 'Historis Saja' },
+                            { value: 0, label: 'Tanpa perkiraan' },
                             { value: 3, label: '+3 Bulan' },
                             { value: 6, label: '+6 Bulan' },
                             { value: 12, label: '+12 Bulan' }
@@ -173,12 +173,12 @@ const InteractiveCashflowChart: React.FC<InteractiveCashflowChartProps> = React.
                     </div>
                     <div className="flex items-center gap-1.5">
                         <span className="w-4 h-0.5 bg-[#2563EB] rounded-full"></span>
-                        <span className="text-[#5A6A85]">Tren Saldo (Historis)</span>
+                        <span className="text-[#5A6A85]">Saldo tercatat</span>
                     </div>
                     {hasProjection && (
                         <div className="flex items-center gap-1.5">
                             <span className="w-4 border-t-2 border-dashed border-[#2563EB]"></span>
-                            <span className="text-[#2563EB] font-bold">Proyeksi Saldo</span>
+                            <span className="text-[#2563EB] font-bold">Perkiraan saldo</span>
                         </div>
                     )}
                 </div>
@@ -186,7 +186,7 @@ const InteractiveCashflowChart: React.FC<InteractiveCashflowChartProps> = React.
                 {hasProjection && (
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full grad-brand text-white text-[11px] font-bold">
                         <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-                        {projectionMonths} Bulan ke Depan
+                        {`Perkiraan ${projectionMonths} bulan`}
                     </span>
                 )}
             </div>
@@ -498,7 +498,7 @@ const InteractiveCashflowChart: React.FC<InteractiveCashflowChartProps> = React.
                             )}
                             <div>
                                 <h5 className="text-xs font-bold text-[#2A3547] uppercase tracking-wider">
-                                    Ringkasan Proyeksi Kas ({projectionMonths} Bulan ke Depan)
+                                    Ringkasan Perkiraan Kas ({projectionMonths} bulan)
                                 </h5>
                                 <p className="text-[11px] text-[#5A6A85] font-medium">
                                     Estimasi dari transaksi 6 bulan terakhir dan sisa pembayaran acara
@@ -520,7 +520,7 @@ const InteractiveCashflowChart: React.FC<InteractiveCashflowChartProps> = React.
                     {/* 4 Decision Metrics */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-1">
                         <div className="bg-white p-3 rounded-xl border border-[#EAEFF4]">
-                            <span className="text-[10px] uppercase font-bold text-[#5A6A85] block">Proyeksi Saldo Akhir</span>
+                            <span className="text-[10px] uppercase font-bold text-[#5A6A85] block">Perkiraan Saldo Akhir</span>
                             <span className="text-sm font-extrabold text-[#2A3547] mt-0.5 block truncate">
                                 {formatCurrency(decisionInsights.projectedEndBalance)}
                             </span>

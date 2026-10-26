@@ -52,10 +52,11 @@ const ClientFinanceRecapView: React.FC<Props> = ({ clients, projects, transactio
         <input type="month" aria-label="Bulan acara" value={monthFilter} onChange={event => setMonthFilter(event.target.value)} className="finance-recap-month-input min-h-[44px] w-full rounded-xl border-2 border-white bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm outline-none focus:border-white focus:ring-4 focus:ring-white/25 sm:w-[190px]" style={{ color: '#1f2937', WebkitTextFillColor: '#1f2937', colorScheme: 'light' }} />
       </label>
     </div>
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
       <Summary label="Total Paket" value={money(rows.reduce((sum, row) => sum + row.contractedIncome, 0))} tone="package" />
       <Summary label="Pemasukan tercatat" value={money(totalIncome)} tone="income" />
       <Summary label="Pengeluaran tercatat" value={money(totalExpense)} tone="expense" />
+      <Summary label="Laba bersih" value={money(totalIncome - totalExpense)} tone={totalIncome >= totalExpense ? 'profit' : 'loss'} />
     </div>
     {rows.length === 0 ? <div className="rounded-2xl border border-[#CBD5E1] bg-white p-8 text-center text-sm text-[#5A6A85]">Belum ada acara pada periode ini.</div> : rows.map(({ project, client, incomes, expenses, packageAmount, addOns, additionalPackages, expenseTotal, incomeTotal, contractedIncome }) => {
       const expanded = expandedId === project.id;
@@ -91,8 +92,8 @@ const ClientFinanceRecapView: React.FC<Props> = ({ clients, projects, transactio
   </section>;
 };
 
-const Summary = ({ label, value, tone }: { label: string; value: string; tone: 'package' | 'income' | 'expense' }) => {
-  const shade = tone === 'package' ? '100%' : tone === 'income' ? '88%' : '76%';
+const Summary = ({ label, value, tone }: { label: string; value: string; tone: 'package' | 'income' | 'expense' | 'profit' | 'loss' }) => {
+  const shade = { package: '100%', income: '88%', expense: '76%', profit: '68%', loss: '60%' }[tone];
   return <div className="rounded-xl border border-brand-accent p-4 text-white" style={{ backgroundColor: `color-mix(in srgb, var(--color-accent) ${shade}, black)` }}><p className="text-xs font-medium text-white">{label}</p><p className="mt-1 text-base font-bold text-white">{value}</p></div>;
 };
 const Metric = ({ label, value, tone }: { label: string; value: string; tone: 'package' | 'income' | 'expense' | 'profit' | 'loss' }) => {

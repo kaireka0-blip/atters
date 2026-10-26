@@ -329,6 +329,7 @@ export interface AddOn {
   name: string;
   price: number;
   region?: Region; // optional region scoping for add-ons
+  durationSelection?: string; // selected duration when this item is an additional package
 }
 
 export interface TeamMember {

@@ -8,6 +8,7 @@ import { getClient } from '../../../services/clients';
 import { listPackagesForInvoice } from '../../../services/packages';
 import { getPublicProfile } from '../../../services/profile';
 import { useSupabaseRealtimeRefresh } from '../../../hooks/useSupabaseRealtimeRefresh';
+import { customizeUiText, useUiTextOverrides } from '../../../utils/uiTextCustomization';
 
 interface PublicInvoiceProps {
     projectId: string;
@@ -18,6 +19,8 @@ interface PublicInvoiceProps {
 }
 
 const PublicInvoice: React.FC<PublicInvoiceProps> = ({ projectId }) => {
+    const uiTextOverrides = useUiTextOverrides();
+    const text = (key: string, fallback: string) => customizeUiText(`public.invoice.${key}`, fallback, uiTextOverrides);
     const [project, setProject] = useState<Project | null>(null);
     const [client, setClient] = useState<Client | null | undefined>(undefined);
     const [packages, setPackages] = useState<Package[]>([]);
@@ -149,7 +152,7 @@ const PublicInvoice: React.FC<PublicInvoiceProps> = ({ projectId }) => {
                     <div className="flex items-center gap-3">
                         <div className="w-2 h-8 bg-brand-accent rounded-full" />
                         <div>
-                            <h1 className="text-xl font-black text-brand-text-light tracking-tight">Invoice Resmi</h1>
+                            <h1 className="text-xl font-black text-brand-text-light tracking-tight">{text('title', 'Invoice Resmi')}</h1>
                             <p className="text-xs font-bold text-brand-text-secondary uppercase tracking-widest">{profile.companyName}</p>
                         </div>
                     </div>
@@ -160,7 +163,7 @@ const PublicInvoice: React.FC<PublicInvoiceProps> = ({ projectId }) => {
                             className="flex items-center gap-2 px-6 py-3 bg-brand-accent hover:bg-brand-accent-hover text-white font-bold rounded-xl shadow-lg shadow-brand-accent/20 transition-all group"
                         >
                             <DownloadIcon className="w-5 h-5 group-hover:translate-y-0.5 transition-transform" />
-                            <span>Unduh PDF</span>
+                            <span>{text('download', 'Unduh PDF')}</span>
                         </button>
                     </div>
                 </div>
