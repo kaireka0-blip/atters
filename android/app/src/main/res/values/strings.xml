@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Vena Pictures</string>
-    <string name="title_activity_main">Vena Pictures</string>
+    <string name="app_name">Attera Visual</string>
+    <string name="title_activity_main">Attera Visual</string>
     <string name="package_name">com.weddfin.app</string>
     <string name="custom_url_scheme">com.weddfin.app</string>
 </resources>

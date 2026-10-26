@@ -225,7 +225,7 @@ export const PublicRoutes: React.FC<PublicRoutesProps> = ({
   }
 
   if (r.startsWith("/login")) {
-    return <Login onLoginSuccess={handleLoginSuccess} users={users} />;
+    return <Login onLoginSuccess={handleLoginSuccess} />;
   }
 
   if (r.startsWith("/profile")) {

@@ -151,7 +151,7 @@ function App() {
 
   // ─── Fallback Authentication Gate ───────────────────────────────────────
   if (!auth.isAuthenticated) {
-    return <Login onLoginSuccess={auth.handleLoginSuccess} users={auth.users} />;
+    return <Login onLoginSuccess={auth.handleLoginSuccess} />;
   }
 
   // ─── Authenticated Application Shell ────────────────────────────────────

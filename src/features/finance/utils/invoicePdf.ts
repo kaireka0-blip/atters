@@ -633,7 +633,7 @@ export const buildInvoicePdf = async (input: InvoicePdfInput): Promise<jsPDF> =>
   setFont(6.5, 'bold');
   ink(COLORS.muted);
   doc.text(
-    'DICETAK OTOMATIS VENA PICTURES',
+    'DICETAK OTOMATIS ATTERA PICTURES',
     CONTENT_LEFT + (sigColW * 2 + sigGap) / 2,
     y + 6.5 * PT_TO_MM,
     { align: 'center' },

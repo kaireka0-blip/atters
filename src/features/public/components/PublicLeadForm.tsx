@@ -46,7 +46,7 @@ const PublicLeadForm: React.FC<PublicLeadFormProps> = ({ setLeads, userProfile, 
     const [isSubmitted, setIsSubmitted] = useState(false);
 
     useEffect(() => {
-        const title = userProfile.companyName || 'Vena Pictures';
+        const title = userProfile.companyName || 'Attera Visual';
         document.title = `Inquiry | ${title}`;
     }, [userProfile.companyName]);
 
@@ -116,7 +116,7 @@ const PublicLeadForm: React.FC<PublicLeadFormProps> = ({ setLeads, userProfile, 
 
     const targetPhone = cleanPhoneNumber(userProfile.phone) || '628123456789';
     const waDirectUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(
-        `Halo ${userProfile.companyName || 'Vena Pictures'}, saya ingin konsultasi mengenai pricelist & dokumentasi acara.`
+        `Halo ${userProfile.companyName || 'Attera Visual'}, saya ingin konsultasi mengenai pricelist & dokumentasi acara.`
     )}`;
 
     // ── SUCCESS CONFIRMATION (LIGHT THEME) ──────────────────────────────────
@@ -136,7 +136,7 @@ const PublicLeadForm: React.FC<PublicLeadFormProps> = ({ setLeads, userProfile, 
                     <div className="space-y-2.5">
                         <a
                             href={`https://wa.me/${targetPhone}?text=${encodeURIComponent(
-                                `Halo ${userProfile.companyName || 'Vena Pictures'}, saya ${formState.name}. Saya baru saja mengisi formulir konsultasi.`
+                                `Halo ${userProfile.companyName || 'Attera Visual'}, saya ${formState.name}. Saya baru saja mengisi formulir konsultasi.`
                             )}`}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -187,7 +187,7 @@ const PublicLeadForm: React.FC<PublicLeadFormProps> = ({ setLeads, userProfile, 
                             {text('title', 'INQUIRY')}
                     </p>
                     <h1 className="text-2xl text-zinc-900 tracking-wider font-normal">
-                        {userProfile.companyName || 'Vena Pictures'}
+                        {userProfile.companyName || 'Attera Visual'}
                     </h1>
                     <div className="w-10 h-px bg-stone-200 mx-auto mt-4" />
                 </div>

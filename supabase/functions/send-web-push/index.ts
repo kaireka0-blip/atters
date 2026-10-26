@@ -8,21 +8,14 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const VAPID_PUBLIC_KEY =
-  Deno.env.get("VAPID_PUBLIC_KEY") ||
-  "BLeZkB_jnCznQoe_RdVJWS3_GUNrB05Tof5-4HXrYndpK1Xzldu4D6cehCGHG_9KJdtLPCHvXOv7ZjCVC0OKaZc";
-
-const VAPID_PRIVATE_KEY =
-  Deno.env.get("VAPID_PRIVATE_KEY") ||
-  "cxy7Ecm4rnw7RcR1nKIP2Mm67NrbVLQHQQSfXy6WkNk";
+const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY");
+const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY");
 
 const VAPID_SUBJECT =
-  Deno.env.get("VAPID_SUBJECT") || "mailto:admin@venapictures.com";
+  Deno.env.get("VAPID_SUBJECT") || "mailto:atter@admin.com";
 
-try {
+if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
-} catch (err) {
-  console.error("[send-web-push] Failed to initialize VAPID details:", err);
 }
 
 serve(async (req: Request) => {
@@ -39,19 +32,63 @@ serve(async (req: Request) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
     const supabaseServiceKey =
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("SUPABASE_ANON_KEY");
 
-    if (!supabaseUrl || !supabaseServiceKey) {
+    if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
       return new Response(
         JSON.stringify({ error: "Supabase credentials not configured in Edge Function" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    const authorization = req.headers.get("Authorization");
+    if (!authorization) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const callerClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authorization } },
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { data: authData, error: authError } = await callerClient.auth.getUser();
+    if (authError || !authData.user?.email) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
+
+    const { data: appUsers, error: appUserError } = await supabase
+      .from("users")
+      .select("id,email,role")
+      .ilike("email", authData.user.email.replace(/[\\%_]/g, "\\$&"))
+      .limit(2);
+    if (appUserError) throw appUserError;
+    const appUser = appUsers?.length === 1 && appUsers[0].email.toLowerCase() === authData.user.email.toLowerCase()
+      ? appUsers[0]
+      : null;
+    if (appUser?.role !== "Admin") {
+      return new Response(JSON.stringify({ error: "Admin access is required." }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+      return new Response(JSON.stringify({ error: "Web Push is not configured." }), {
+        status: 503,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const body = await req.json().catch(() => ({}));
     const { vendor_id, user_id, title, message, url, icon, tag } = body;
@@ -91,12 +128,12 @@ serve(async (req: Request) => {
     }
 
     const pushPayload = JSON.stringify({
-      title: title || "Vena Pictures",
+      title: title || "Attera Visual",
       body: message || "Ada pembaruan baru di aplikasi.",
       icon: icon || "/pwa-192x192.png",
       badge: "/pwa-192x192.png",
       url: url || "/",
-      tag: tag || `vena-${Date.now()}`,
+      tag: tag || `attera-visual-${Date.now()}`,
       timestamp: Date.now(),
     });
 

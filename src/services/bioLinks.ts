@@ -7,7 +7,7 @@ type BioLinkPageInput = Omit<BioLinkPage, 'id' | 'updated_at'>;
 
 export const DEFAULT_BIO_LINK_PAGE: BioLinkPageInput = {
   slug: 'link-bisnis',
-  title: 'Vena Pictures',
+  title: 'Attera Visual',
   subtitle: 'Wedding & Prewedding Photography Portfolio',
   whatsapp_number: '6281234567890',
   whatsapp_label: 'Konsultasi via WhatsApp',

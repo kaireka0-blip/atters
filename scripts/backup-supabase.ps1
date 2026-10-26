@@ -1,4 +1,4 @@
-# Backup penuh database Supabase project Vena Pictures via Supabase CLI.
+# Backup penuh database Supabase project Attera Visual via Supabase CLI.
 #
 # Menghasilkan (mengikuti panduan resmi Supabase "Backup and Restore using the CLI"):
 #   roles.sql   -> cluster roles        (--role-only)

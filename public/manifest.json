@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "Vena Pictures",
-  "short_name": "VenaPictures",
-  "description": "Vena Pictures — manajemen pengantin, keuangan, dan penjadwalan tim untuk bisnis wedding photography profesional.",
+  "name": "Attera Visual",
+  "short_name": "AtteraVisual",
+  "description": "Attera Visual — manajemen pengantin, keuangan, dan penjadwalan tim untuk bisnis wedding photography profesional.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

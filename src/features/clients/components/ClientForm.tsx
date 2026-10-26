@@ -942,6 +942,7 @@ const ClientForm: React.FC<ClientFormProps> = ({
                             <div className="space-y-2">
                                 <label htmlFor="dpDestinationCardId" className={labelClass}>Kartu Tujuan</label>
                                 <select
+                                    id="dpDestinationCardId"
                                     name="dpDestinationCardId"
                                     value={formData.dpDestinationCardId}
                                     onChange={handleFormChange}

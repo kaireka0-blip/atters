@@ -1012,7 +1012,7 @@ const GalleryTab: React.FC<{ projects: Project[]; packages?: Package[] }> = ({ p
                 Semua file tersimpan aman di Google Drive dan dapat diakses langsung tanpa batas waktu.
               </span>
               <span className="text-zinc-400 text-[10px]">
-                Sinkronisasi Cloud Vena Pictures
+                Sinkronisasi Cloud Attera Visual
               </span>
             </div>
           </div>

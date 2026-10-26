@@ -542,7 +542,7 @@ const createSummaryWorksheet = (
 
 const buildWorkbook = (context: FinanceExportContext, subject: string) => {
     const workbook = new ExcelJS.Workbook();
-    const companyName = context.companyName || 'Vena';
+    const companyName = context.companyName || 'Attera Visual';
     const now = new Date();
     workbook.creator = companyName;
     workbook.created = now;

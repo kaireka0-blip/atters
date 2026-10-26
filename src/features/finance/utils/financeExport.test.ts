@@ -81,7 +81,7 @@ describe('financeExport — workbook Transaksi', () => {
 
     it('memuat sheet Ringkasan + Transaksi dengan header lengkap', () => {
         const workbook = buildTransactionsWorkbook(filtered, all, { income: 5000000, expense: 1500000, net: 3500000 }, {
-            companyName: 'Vena',
+            companyName: 'Attera Visual',
             cards: [buildCard()],
             projects: [buildProject()],
         });
@@ -185,7 +185,7 @@ describe('financeExport — workbook Laba per Acara', () => {
     ];
 
     it('menyusun kolom laba, status, dan ringkasan periode', () => {
-        const workbook = buildProfitReportWorkbook(profitData, { year: 2026, month: 9 }, { companyName: 'Vena' });
+        const workbook = buildProfitReportWorkbook(profitData, { year: 2026, month: 9 }, { companyName: 'Attera Visual' });
         expect(workbook.worksheets.map(ws => ws.name)).toEqual(['Ringkasan', 'Laba per Acara Pernikahan']);
 
         const sheet = workbook.getWorksheet('Laba per Acara Pernikahan')!;
@@ -224,7 +224,7 @@ describe('financeExport — workbook Kartu & Akun', () => {
             mostUsedCardName: 'BCA (••••1234)',
             mostUsedCardTxCount: 2,
             cashBalance: 0,
-        }, { cards, transactions, companyName: 'Vena' });
+        }, { cards, transactions, companyName: 'Attera Visual' });
 
         expect(workbook.worksheets.map(ws => ws.name)).toEqual(['Ringkasan', 'Kartu & Akun', 'Kantong']);
 

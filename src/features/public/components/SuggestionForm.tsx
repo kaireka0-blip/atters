@@ -85,7 +85,7 @@ const SuggestionForm: React.FC<SuggestionFormProps> = ({ setLeads }) => {
                         <Logo />
                     </div>
                     <h1 className="text-2xl font-bold text-brand-text-light">{text('title', 'Formulir Saran & Masukan')}</h1>
-                    <p className="text-sm text-brand-text-secondary">Punya ide atau pertanyaan untuk Vena Pictures? Kami ingin mendengarnya dari Anda!</p>
+                    <p className="text-sm text-brand-text-secondary">Punya ide atau pertanyaan untuk Attera Visual? Kami ingin mendengarnya dari Anda!</p>
                 </div>
 
                 <form className="space-y-4 form-compact form-compact--ios-scale" onSubmit={handleSubmit}>

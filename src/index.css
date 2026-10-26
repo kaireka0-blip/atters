@@ -636,7 +636,7 @@ summary {
 }
 
 /* ==========================================================================
-   VENA Redesign Palette — Solid & Gradient accent utilities
+   ATTERA VISUAL Redesign Palette — Solid & Gradient accent utilities
    Palet dekoratif (non-semantik). Warna semantik (sukses/peringatan/error/
    info) TIDAK memakai kelas ini. Kelas .grad-brand tetap mengikuti Brand Color
    vendor melalui var(--color-accent*).

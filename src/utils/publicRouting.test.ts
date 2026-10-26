@@ -21,15 +21,15 @@ describe('public name slugs', () => {
   });
 
   it('creates clean gallery links when the title slug is unique', () => {
-    const gallery = { id: 'gallery-id', public_id: 'price-list-vena-2026-banten-8ef5y', title: 'Price List Vena 2026 Banten' };
+    const gallery = { id: 'gallery-id', public_id: 'price-list-attera-visual-2026-banten-8ef5y', title: 'Price List Attera Visual 2026 Banten' };
 
-    expect(toGalleryPublicSlug(gallery.title)).toBe('price-list-vena-2026-banten');
-    expect(getGalleryPublicRouteId(gallery, [gallery])).toBe('price-list-vena-2026-banten');
+    expect(toGalleryPublicSlug(gallery.title)).toBe('price-list-attera-visual-2026-banten');
+    expect(getGalleryPublicRouteId(gallery, [gallery])).toBe('price-list-attera-visual-2026-banten');
   });
 
   it('keeps the unique id when another gallery has the same slug', () => {
-    const gallery = { id: 'gallery-id', public_id: 'price-list-vena-2026-banten-8ef5y', title: 'Price List Vena 2026 Banten' };
-    const duplicate = { id: 'other-gallery', public_id: 'other-id', title: 'Price List Vena 2026 Banten' };
+    const gallery = { id: 'gallery-id', public_id: 'price-list-attera-visual-2026-banten-8ef5y', title: 'Price List Attera Visual 2026 Banten' };
+    const duplicate = { id: 'other-gallery', public_id: 'other-id', title: 'Price List Attera Visual 2026 Banten' };
 
     expect(getGalleryPublicRouteId(gallery, [gallery, duplicate])).toBe(gallery.public_id);
   });

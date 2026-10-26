@@ -1,9 +1,9 @@
 {
-  "name": "vena-pictures-dashboard",
+  "name": "attera-visual-dashboard",
   "private": true,
   "version": "0.0.0",
   "author": "nopianhadi",
-  "description": "Vena Pictures - dashboard for wedding business",
+  "description": "Attera Visual - dashboard for wedding business",
   "type": "module",
   "sideEffects": false,
   "scripts": {
@@ -76,7 +76,7 @@
     "jsdom": "^25.0.0",
     "postcss": "^8.5.6",
     "sharp": "^0.35.5",
-    "supabase": "^2.47.2",
+    "supabase": "^2.122.0",
     "tailwindcss": "^4.3.3",
     "terser": "^5.44.0",
     "typescript": "~5.8.2",

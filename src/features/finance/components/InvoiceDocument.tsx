@@ -337,7 +337,7 @@ const InvoiceDocument: React.FC<InvoiceDocumentProps> = ({
         {/* Footer / Signatures */}
         <div className="invoice-signature-section avoid-break grid grid-cols-3 gap-2 sm:gap-6 pt-2.5 sm:pt-4 border-t border-slate-100 print:border-slate-200">
           <div className="col-span-2 flex items-end justify-center pb-1 sm:pb-2">
-            <p className="invoice-footer-note text-[6.5px] sm:text-[9px] text-slate-400 text-center uppercase tracking-widest font-black">Dicetak Otomatis Vena Pictures</p>
+            <p className="invoice-footer-note text-[6.5px] sm:text-[9px] text-slate-400 text-center uppercase tracking-widest font-black">Dicetak Otomatis Attera Visual</p>
           </div>
           <div className="text-center flex flex-col items-center">
             <p className="invoice-section-label text-[7px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 sm:mb-2">Hormat Kami,</p>

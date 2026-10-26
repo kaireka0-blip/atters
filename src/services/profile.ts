@@ -72,7 +72,7 @@ function fromRow(row: any): Profile {
     brandColor: row.brand_color || undefined,
     publicPageConfig: row.public_page_config ? {
       template: row.public_page_config.template || 'classic',
-      title: row.public_page_config.title || 'Vena Pictures',
+      title: row.public_page_config.title || 'Attera Visual',
       introduction: row.public_page_config.introduction || '',
       galleryImages: row.public_page_config.galleryImages || [],
       backgroundImages: row.public_page_config.backgroundImages || {},
@@ -89,7 +89,7 @@ function fromRow(row: any): Profile {
       secondaryPhone: row.public_page_config.secondaryPhone || undefined,
     } : {
       template: (row.public_page_template || 'classic') as any,
-      title: row.public_page_title || 'Vena Pictures',
+      title: row.public_page_title || 'Attera Visual',
       introduction: row.public_page_introduction || '',
       galleryImages: [],
       backgroundImages: {},

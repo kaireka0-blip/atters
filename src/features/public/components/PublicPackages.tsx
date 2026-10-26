@@ -910,7 +910,7 @@ const PublicPackages: React.FC<PublicPackagesProps> = ({ userProfile: initialUse
                         <section className="mb-8 md:mb-10 widget-animate -mx-4" style={{ animationDelay: '100ms' }}>
                             <div className="text-center mb-4">
                                 <h3 className="text-2xl font-bold text-brand-text-light">Pricelist</h3>
-                                <p className="text-sm text-brand-text-secondary mt-1">Pricelist {userProfile?.companyName || 'Vena Pictures'}</p>
+                                <p className="text-sm text-brand-text-secondary mt-1">Pricelist {userProfile?.companyName || 'Attera Visual'}</p>
                             </div>
                             <div className="space-y-2 sm:space-y-3">
                                 {publicPageConfig?.galleryImages?.map((imgSrc, index) => (

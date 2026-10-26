@@ -217,5 +217,5 @@ Lihat: [docs/SUPABASE_BACKUP_GUIDE.md](../docs/SUPABASE_BACKUP_GUIDE.md)
 
 ---
 
-**Maintainer**: Vena Pictures Team
+**Maintainer**: Attera Visual Team
 **Last Updated**: 1 Maret 2026

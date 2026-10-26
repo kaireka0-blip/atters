@@ -117,9 +117,9 @@ describe('profile booking template envelope', () => {
     const { upsertProfile } = await import('../profile');
     const profile = await upsertProfile({
       fullName: 'Admin',
-      email: 'admin@vena.com',
+      email: 'atter@admin.com',
       phone: '081200000000',
-      companyName: 'Vena Pictures',
+      companyName: 'Attera Visual',
       address: 'Studio address',
       bankAccount: 'Business account',
       authorizedSigner: 'Admin',

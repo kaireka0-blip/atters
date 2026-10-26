@@ -1,12 +1,12 @@
 # ========================================
-# Setup Android Project - Vena Pictures
+# Setup Android Project - Attera Visual
 # ========================================
 # Script ini membantu setup project Android
 # dan mempersiapkan build APK
 # ========================================
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "   Setup Android Project - Vena Pictures" -ForegroundColor Cyan
+Write-Host "   Setup Android Project - Attera Visual" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 

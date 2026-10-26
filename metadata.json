@@ -1,6 +1,6 @@
 {
-  "name": "Vena Pictures",
-  "description": "Vena Pictures — manajemen pengantin, keuangan, dan penjadwalan tim untuk bisnis wedding photography profesional.",
+  "name": "Attera Visual",
+  "description": "Attera Visual — manajemen pengantin, keuangan, dan penjadwalan tim untuk bisnis wedding photography profesional.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

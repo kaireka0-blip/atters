@@ -6,10 +6,9 @@ import { supabase, isSupabaseConfigured } from '../../lib/supabaseClient';
 
 interface LoginProps {
     onLoginSuccess: (user: User) => void;
-    users: User[];
 }
 
-const Login: React.FC<LoginProps> = ({ onLoginSuccess, users }) => {
+const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -22,34 +21,21 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, users }) => {
         setIsLoading(true);
 
         const cleanEmail = email.trim();
-        const cleanPassword = password.trim();
-
         if (!isSupabaseConfigured) {
-            const demoUser: User = {
-                id: 'demo-user-1',
-                email: cleanEmail || 'admin@venapictures.com',
-                password: '',
-                fullName: 'Admin Demo',
-                role: 'Admin',
-                permissions: [],
-            };
-            onLoginSuccess(demoUser);
+            setError('Koneksi Supabase belum dikonfigurasi. Periksa pengaturan aplikasi lalu coba lagi.');
             setIsLoading(false);
             return;
         }
-
-        console.log('[Login] Attempting login for:', cleanEmail);
 
         try {
             // 1. Sign in via Supabase Auth (Secure)
             const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
                 email: cleanEmail,
-                password: cleanPassword,
+                password,
             });
 
             if (authError || !authData?.user) {
-                console.warn('[Login] Auth error:', authError?.message);
-                setError('Username atau kata sandi salah (atau belum terdaftar di Supabase Auth).');
+                setError('Email atau kata sandi salah.');
                 setIsLoading(false);
                 return;
             }
@@ -94,18 +80,13 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, users }) => {
                 <div className="login-card bg-white/80 backdrop-blur-xl p-8 rounded-2xl shadow-xl border border-white/50">
                     <div className="login-header text-center mb-8">
                         <div className="login-logo-wrap flex justify-center mb-6">
-                            <img src="/assets/images/logos/light-logo.svg" alt="Vena Pictures" width="160" height="40" decoding="async" className="h-10 w-auto"  loading="lazy" />
+                            <img src="/assets/images/logos/light-logo.svg" alt="Attera Visual" width="160" height="40" decoding="async" className="h-10 w-auto"  loading="lazy" />
                         </div>
                         <h1 className="text-3xl font-bold text-slate-800">Login</h1>
                         <p className="text-sm text-slate-500 mt-2">Hey, masukkan detail Anda untuk masuk ke akun Anda</p>
                     </div>
 
                     <form className="login-form space-y-5" onSubmit={handleSubmit}>
-                        {!isSupabaseConfigured && (
-                            <div className="p-3 bg-blue-50 border border-blue-200 text-blue-800 rounded-lg text-xs leading-relaxed">
-                                <strong>Mode Pratinjau Demo:</strong> Database Supabase belum dikonfigurasi. Anda dapat langsung klik <strong>Log In</strong> untuk masuk sebagai Demo Admin.
-                            </div>
-                        )}
                         {error && (
                             <div className="login-error p-3 bg-red-100 border border-red-200 text-red-700 rounded-lg text-sm">
                                 {error}
@@ -116,8 +97,9 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, users }) => {
                             <input
                                 id="email"
                                 name="email"
-                                type="text"
-                                required={isSupabaseConfigured}
+                                type="email"
+                                autoComplete="username"
+                                required
                                 className="w-full h-12 px-4 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-800"
                                 placeholder="Enter your username/email"
                                 value={email}
@@ -130,7 +112,8 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, users }) => {
                                 id="password"
                                 name="password"
                                 type={isPasswordVisible ? 'text' : 'password'}
-                                required={isSupabaseConfigured}
+                                autoComplete="current-password"
+                                required
                                 className="w-full h-12 px-4 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-800"
                                 style={{ paddingRight: '2.5rem' }}
                                 placeholder="Enter your password"

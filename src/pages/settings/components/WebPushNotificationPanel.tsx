@@ -366,7 +366,7 @@ export const WebPushNotificationPanel: React.FC<WebPushNotificationPanelProps> =
               <ol className="list-decimal list-inside text-xs sm:text-sm text-amber-900 space-y-1 pt-1 font-medium">
                 <li>Ketuk tombol <strong>Bagikan (Share)</strong> di bilah navigasi Safari bawah.</li>
                 <li>Gulir ke bawah lalu ketuk <strong>Tambah ke Layar Utama (Add to Home Screen)</strong>.</li>
-                <li>Buka aplikasi <strong>Vena Pictures</strong> dari Layar Utama Anda, lalu ketuk tombol <strong>Aktifkan Notifikasi</strong> di atas.</li>
+                <li>Buka aplikasi <strong>Attera Visual</strong> dari Layar Utama Anda, lalu ketuk tombol <strong>Aktifkan Notifikasi</strong> di atas.</li>
               </ol>
             </div>
           </div>
@@ -446,7 +446,7 @@ export const WebPushNotificationPanel: React.FC<WebPushNotificationPanelProps> =
             <div className="flex items-center justify-between py-1.5 border-b border-brand-border/60">
               <span className="text-brand-text-secondary">Nama Vendor:</span>
               <span className="font-semibold text-brand-text-light">
-                {profile.companyName || profile.fullName || 'Vena Pictures'}
+                {profile.companyName || profile.fullName || 'Attera Visual'}
               </span>
             </div>
 

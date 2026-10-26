@@ -82,7 +82,7 @@ export const useClientDocumentActions = ({
         if (!documentToView || !clientForDetail) return;
 
         const phone = clientForDetail.whatsapp || clientForDetail.phone;
-        const companyName = userProfile?.companyName || 'Vena Pictures';
+        const companyName = userProfile?.companyName || 'Attera Visual';
 
         if (documentToView.type === 'invoice') {
             const proj = documentToView.project;

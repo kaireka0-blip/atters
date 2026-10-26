@@ -2,7 +2,7 @@ import supabase from '../lib/supabaseClient';
 import { PushNotificationPayload, PushSubscriptionRecord } from '../types';
 
 export const DEFAULT_VAPID_PUBLIC_KEY =
-  'BLeZkB_jnCznQoe_RdVJWS3_GUNrB05Tof5-4HXrYndpK1Xzldu4D6cehCGHG_9KJdtLPCHvXOv7ZjCVC0OKaZc';
+  'BJX_NFnL_PHk-4FzDZFa6x7HjcGudIIoUTr91w3lKoygm0YvJoBnAgwBrgsSSvCOvAhfz_3pyhl0eWDGPwi_ZoU';
 
 export function getVapidPublicKey(): string {
   const envKey = (import.meta as any).env?.VITE_VAPID_PUBLIC_KEY;
@@ -268,7 +268,7 @@ export async function sendTestPushNotification(vendorId: string): Promise<{ succ
       try {
         const reg = await navigator.serviceWorker.ready;
         if (reg) {
-          reg.showNotification('Uji Coba Push Vena Pictures', {
+          reg.showNotification('Uji Coba Push Attera Visual', {
             body: 'Notifikasi Web Push aktif dan berfungsi dengan baik!',
             icon: '/pwa-192x192.png',
             tag: 'test-push-' + Date.now(),
@@ -282,7 +282,7 @@ export async function sendTestPushNotification(vendorId: string): Promise<{ succ
     // Also trigger Edge Function to test remote push delivery across other devices registered to this vendor
     const res = await dispatchWebPush({
       vendor_id: vendorId,
-      title: 'Uji Coba Notifikasi Vena Pictures',
+      title: 'Uji Coba Notifikasi Attera Visual',
       message: 'Sistem Web Push Notification berhasil terhubung ke server!',
       url: '/#/settings',
       tag: 'test-push',
