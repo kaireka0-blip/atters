@@ -517,7 +517,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
       ══════════════════════════════════════════════════════════════════ */}
       <div
         className="relative mb-3 sm:mb-4 overflow-hidden rounded-xl border border-slate-200/40 bg-cover bg-center shadow-md sm:rounded-2xl"
-        style={{ backgroundImage: `url(${profile.publicPageConfig?.backgroundImages?.eventDetail || '/assets/images/backgrounds/detail-acara-pernikahan.jpg'})` }}
+        style={profile.publicPageConfig?.backgroundImages?.eventDetail ? { backgroundImage: `url(${profile.publicPageConfig.backgroundImages.eventDetail})` } : undefined}
       >
         <div className="absolute inset-0 bg-gradient-to-b from-slate-900/75 via-slate-900/65 to-slate-900/85" />
         <div className="relative p-3.5 sm:p-5">

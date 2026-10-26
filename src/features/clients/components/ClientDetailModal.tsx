@@ -731,7 +731,7 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
       {/* ── HERO HEADER ─────────────────────────────────────────────────── */}
       <div
         className="relative rounded-2xl overflow-hidden mb-3 sm:mb-5 shadow-lg shadow-blue-500/20 bg-cover bg-center"
-        style={{ backgroundImage: `url(${profile.publicPageConfig?.backgroundImages?.clientDetail || '/assets/images/backgrounds/detail-pengantin-4.jpg'})` }}
+        style={profile.publicPageConfig?.backgroundImages?.clientDetail ? { backgroundImage: `url(${profile.publicPageConfig.backgroundImages.clientDetail})` } : undefined}
       >
         {/* Dark overlay to ensure text readability */}
         <div className="absolute inset-0 bg-black/50 pointer-events-none" />

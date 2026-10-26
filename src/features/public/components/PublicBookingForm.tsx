@@ -1009,22 +1009,17 @@ Mohon konfirmasi untuk langkah selanjutnya. Terima kasih! 🙏`;
                 <div className="bg-public-surface p-3 md:p-4 sm:p-6 md:p-8 rounded-2xl shadow-lg border border-public-border">
                     {/* Hero Image */}
                     <div className="w-full h-32 sm:h-48 md:h-64 mb-6 rounded-xl overflow-hidden shadow-md">
-                        <img
-                            src={userProfile.publicPageConfig?.backgroundImages?.bookingForm || userProfile.publicPageConfig?.backgroundImages?.eventDetail || "/assets/images/backgrounds/detail-acara-pernikahan.jpg"}
+                        {(userProfile.publicPageConfig?.backgroundImages?.bookingForm || userProfile.publicPageConfig?.backgroundImages?.eventDetail) && <img
+                            src={userProfile.publicPageConfig.backgroundImages.bookingForm || userProfile.publicPageConfig.backgroundImages.eventDetail}
                             alt="Hero"
                             className="w-full h-full object-cover"
                             loading="lazy"
                             decoding="async"
                             onError={(event) => {
                                 const imageElement = event.currentTarget;
-                                if (imageElement.dataset.fallbackApplied === 'true') {
-                                    imageElement.style.visibility = 'hidden';
-                                    return;
-                                }
-                                imageElement.dataset.fallbackApplied = 'true';
-                                imageElement.src = '/assets/images/backgrounds/detail-acara-pernikahan.jpg';
+                                imageElement.style.visibility = 'hidden';
                             }}
-                        />
+                        />}
                     </div>
                     <div className="text-center mb-6 md:mb-8">
                         <h1 className="text-2xl md:text-3xl font-bold text-gradient">{userProfile.companyName}</h1>

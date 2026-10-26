@@ -172,11 +172,11 @@ const PublicLeadForm: React.FC<PublicLeadFormProps> = ({ setLeads, userProfile, 
         <div className="public-lead-form-page min-h-screen bg-stone-100 flex items-center justify-center p-4 sm:p-6 lg:p-8">
             <div className="w-full max-w-lg bg-white rounded-2xl border border-stone-200 shadow-xl overflow-hidden">
                 <div className="w-full h-32 sm:h-44 md:h-52 overflow-hidden">
-                    <img
-                        src={userProfile.publicPageConfig?.backgroundImages?.leadForm || userProfile.publicPageConfig?.backgroundImages?.bookingForm || '/assets/images/backgrounds/detail-acara-pernikahan.jpg'}
+                    {(userProfile.publicPageConfig?.backgroundImages?.leadForm || userProfile.publicPageConfig?.backgroundImages?.bookingForm) && <img
+                        src={userProfile.publicPageConfig.backgroundImages.leadForm || userProfile.publicPageConfig.backgroundImages.bookingForm}
                         alt="Background form inquiry"
                         className="w-full h-full object-cover"
-                     loading="lazy" decoding="async" />
+                     loading="lazy" decoding="async" />}
                 </div>
                 {/* Header */}
                 <div className="pt-9 pb-6 px-6 sm:px-10 text-center">
@@ -275,7 +275,7 @@ const PublicLeadForm: React.FC<PublicLeadFormProps> = ({ setLeads, userProfile, 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                                 <label htmlFor="eventLocation" className="block text-[10px] font-bold text-zinc-500 mb-1 uppercase tracking-widest">
-                                    Lokasi
+                                    Lokasi Acara
                                 </label>
                                 <input
                                     type="text"
@@ -291,7 +291,7 @@ const PublicLeadForm: React.FC<PublicLeadFormProps> = ({ setLeads, userProfile, 
                             </div>
                             <div>
                                 <label htmlFor="eventDate" className="block text-[10px] font-bold text-zinc-500 mb-1 uppercase tracking-widest">
-                                    Tanggal <span className="text-zinc-400 font-medium normal-case">(opsional)</span>
+                                    Tanggal Acara
                                 </label>
                                 <input
                                     type="date"

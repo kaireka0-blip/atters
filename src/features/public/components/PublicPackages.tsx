@@ -889,17 +889,17 @@ const PublicPackages: React.FC<PublicPackagesProps> = ({ userProfile: initialUse
                     <header className="text-center mb-16 widget-animate">
                         {/* Hero Image */}
                         <div className="w-full h-56 sm:h-72 md:h-96 mb-8 rounded-3xl overflow-hidden shadow-2xl border border-brand-border/60">
-                            <img
-                                src={userProfile.publicPageConfig?.backgroundImages?.portalPengantin || "/assets/images/backgrounds/portal-pengantin-3.jpg"}
+                            {userProfile.publicPageConfig?.backgroundImages?.bookingForm && <img
+                                src={userProfile.publicPageConfig.backgroundImages.bookingForm}
                                 alt="Hero"
                                 className="w-full h-full object-cover"
                                 loading="lazy"
                                 decoding="async"
                                 onError={(event) => {
                                     event.currentTarget.onerror = null;
-                                    event.currentTarget.src = '/assets/images/backgrounds/portal-pengantin-3.jpg';
+                                    event.currentTarget.style.visibility = 'hidden';
                                 }}
-                            />
+                            />}
                         </div>
                         {publicPageConfig?.introduction && (
                             <p className="text-base md:text-lg text-brand-text-secondary mt-4 max-w-3xl mx-auto leading-relaxed">{publicPageConfig.introduction}</p>
@@ -1112,13 +1112,7 @@ const PublicPackages: React.FC<PublicPackagesProps> = ({ userProfile: initialUse
                                                             className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                                                             decoding="async"
                                                             onError={(e) => {
-                                                                const target = e.currentTarget;
-                                                                if (target.dataset.fallbackApplied === 'true') {
-                                                                    target.style.display = 'none';
-                                                                    return;
-                                                                }
-                                                                target.dataset.fallbackApplied = 'true';
-                                                                target.src = '/assets/images/backgrounds/portal-pengantin-3.jpg';
+                                                                e.currentTarget.style.display = 'none';
                                                             }}
                                                         />
                                                     </div>

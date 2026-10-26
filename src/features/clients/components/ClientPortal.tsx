@@ -85,7 +85,7 @@ const PORTAL_STYLES = `
 
   /* ── hero ── */
   .hero-gradient { 
-    background: url('/assets/images/backgrounds/portal-pengantin-3.jpg') center/cover no-repeat;
+    background: linear-gradient(135deg, #334155, #0f172a);
   }
 
   /* ── tabs ── */
@@ -273,7 +273,7 @@ const ClientPortal: React.FC<ClientPortalProps> = ({
       ══════════════════════════════════════════════════════════════════ */}
       <div
         className="hero-gradient relative overflow-hidden"
-        style={{ backgroundImage: `url(${profile.publicPageConfig?.backgroundImages?.portalPengantin || '/assets/images/backgrounds/portal-pengantin-3.jpg'})` }}
+        style={profile.publicPageConfig?.backgroundImages?.portalPengantin ? { backgroundImage: `url(${profile.publicPageConfig.backgroundImages.portalPengantin})` } : undefined}
       >
         {/* Overlay for text readability */}
         <div className="portal-hero-overlay absolute inset-0 bg-black/60 pointer-events-none" />
