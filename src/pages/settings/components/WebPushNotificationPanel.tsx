@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Profile, User } from '../../../types';
 import LoginActivityPanel from './LoginActivityPanel';
+import { syncCurrentSessionPushEndpoint } from '../../../services/loginSessions';
 import {
   isPushSupported,
   isIOS,
@@ -79,6 +80,7 @@ export const WebPushNotificationPanel: React.FC<WebPushNotificationPanelProps> =
     try {
       const res = await subscribeToPushNotifications(profile.id, currentUser?.id);
       if (res.success && res.subscription) {
+        await syncCurrentSessionPushEndpoint(res.subscription.endpoint);
         setIsSubscribed(true);
         setEndpoint(res.subscription.endpoint);
         setPermission('granted');
@@ -109,6 +111,7 @@ export const WebPushNotificationPanel: React.FC<WebPushNotificationPanelProps> =
     try {
       const res = await unsubscribeFromPushNotifications(profile.id);
       if (res.success) {
+        await syncCurrentSessionPushEndpoint(null);
         setIsSubscribed(false);
         setEndpoint(null);
         setFeedback({

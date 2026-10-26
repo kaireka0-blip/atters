@@ -82,9 +82,12 @@ try {
 try {
   if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch((err) => {
-        console.warn('[PWA] Service Worker registration warning:', err);
-      });
+      navigator.serviceWorker
+        .register('/sw.js', { scope: '/', updateViaCache: 'none' })
+        .then((registration) => registration.update())
+        .catch((err) => {
+          console.warn('[PWA] Service Worker registration warning:', err);
+        });
     });
   }
 } catch (_) {}

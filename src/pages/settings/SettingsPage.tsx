@@ -2301,13 +2301,13 @@ const Settings: React.FC<SettingsProps> = ({ profile, setProfile, transactions, 
                                 type="button"
                                 aria-current={activeTab === tab.id ? 'page' : undefined}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`flex min-h-12 items-center justify-center gap-2 rounded-lg px-2 py-2 text-center text-xs font-semibold leading-tight transition-all sm:px-3 sm:text-sm ${activeTab === tab.id
+                                className={`flex min-h-12 w-full min-w-0 items-center justify-center gap-2 overflow-hidden rounded-lg px-2 py-2 text-center text-xs font-semibold leading-tight transition-all sm:px-3 sm:text-sm ${activeTab === tab.id
                                     ? 'bg-brand-accent text-white shadow-sm'
                                     : 'text-brand-text-secondary hover:bg-brand-bg hover:text-brand-text-primary'
                                     }`}
                             >
                                 <tab.icon className="h-4 w-4 shrink-0" />
-                                <span>{tab.label}</span>
+                                <span className="min-w-0 whitespace-normal break-words">{tab.label}</span>
                             </button>
                         ))}
                 </div>

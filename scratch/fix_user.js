@@ -13,11 +13,17 @@ if (!supabaseUrlMatch || !supabaseKeyMatch) {
 
 const supabase = createClient(supabaseUrlMatch[1].trim(), supabaseKeyMatch[1].trim());
 
+const adminEmail = 'atter@admin.com';
+const adminPassword = process.env.ATTERA_ADMIN_PASSWORD;
+if (!adminPassword) {
+  throw new Error('Set ATTERA_ADMIN_PASSWORD before running this helper.');
+}
+
 async function run() {
   console.log("Signing in...");
   const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-    email: 'admin@vena.com',
-    password: 'Gedangburuk22'
+    email: adminEmail,
+    password: adminPassword
   });
 
   if (authError || !authData.user) {
@@ -32,7 +38,7 @@ async function run() {
     .from('users')
     .upsert({
       id: authData.user.id,
-      email: 'admin@vena.com',
+      email: adminEmail,
       full_name: 'Admin Vena',
       role: 'Admin',
       permissions: []

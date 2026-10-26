@@ -4,7 +4,7 @@
              Chrome Android, Chrome Desktop, Edge, and Firefox.
    ========================================================================== */
 
-const CACHE_NAME = 'vena-cache-v1';
+const CACHE_NAME = 'attera-visual-cache-v2';
 
 // Install event - activate immediately
 self.addEventListener('install', (event) => {
@@ -16,6 +16,11 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     Promise.all([
       self.clients.claim(),
+      self.registration.getNotifications().then((notifications) => {
+        notifications
+          .filter((notification) => /vena\s*pictures/i.test(notification.title))
+          .forEach((notification) => notification.close());
+      }),
       caches.keys().then((keys) =>
         Promise.all(
           keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
@@ -33,7 +38,7 @@ self.addEventListener('push', (event) => {
     icon: '/pwa-192x192.png',
     badge: '/pwa-192x192.png',
     url: '/',
-    tag: 'vena-push-' + Date.now(),
+    tag: 'attera-visual-push-' + Date.now(),
   };
 
   if (event.data) {
