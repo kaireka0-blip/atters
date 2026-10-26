@@ -15,6 +15,7 @@ import { formatCurrency } from '../utils/teamUtils';
 
 interface MemberGroups {
     team: TeamMember[];
+    employee: TeamMember[];
     vendor: TeamMember[];
 }
 
@@ -100,6 +101,11 @@ export const useTeamStats = ({
         [memberGroups.team, teamProjectPayments],
     );
 
+    const employeeSectionStats = useMemo(
+        () => buildSectionStats(memberGroups.employee, teamProjectPayments),
+        [memberGroups.employee, teamProjectPayments],
+    );
+
     const vendorSectionStats = useMemo(
         () => buildSectionStats(memberGroups.vendor, teamProjectPayments),
         [memberGroups.vendor, teamProjectPayments],
@@ -119,5 +125,5 @@ export const useTeamStats = ({
         };
     }, [teamPaymentRecords, teamProjectPayments, teamMembers]);
 
-    return { teamSectionStats, vendorSectionStats, teamStats };
+    return { teamSectionStats, employeeSectionStats, vendorSectionStats, teamStats };
 };

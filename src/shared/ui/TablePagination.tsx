@@ -19,7 +19,7 @@ export const TablePagination: React.FC<TablePaginationProps> = ({
   onPageChange,
   onItemsPerPageChange,
   label = 'data',
-  pageSizeOptions = [10, 20, 50],
+  pageSizeOptions = [10, 20],
   className = '',
 }) => {
   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));

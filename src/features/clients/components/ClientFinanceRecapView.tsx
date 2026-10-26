@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Client, Project, Transaction, TransactionType } from '../../../types';
 
 const money = (value: number) => `Rp ${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(Math.round(value || 0))}`;
@@ -45,10 +46,10 @@ const ClientFinanceRecapView: React.FC<Props> = ({ clients, projects, transactio
   const totalExpense = rows.reduce((sum, row) => sum + row.expenseTotal, 0);
 
   return <section className="space-y-4 animate-fade-in">
-    <div className="flex flex-wrap items-end justify-between gap-3 rounded-2xl border border-blue-800 bg-blue-700 p-4">
+    <div className="flex flex-wrap items-end justify-between gap-3 rounded-2xl border border-brand-accent bg-brand-accent p-4">
       <div><h3 className="font-bold text-white">Rekap Keuangan per Pengantin</h3><p className="mt-1 text-xs text-white">Total paket, pemasukan dan pengeluaran tercatat per acara.</p></div>
-      <label className="flex items-center gap-2 text-xs font-semibold text-white">Bulan acara
-        <input type="month" value={monthFilter} onChange={event => setMonthFilter(event.target.value)} className="rounded-lg border border-[#CBD5E1] bg-white px-2 py-2 text-xs text-[#2A3547]" />
+      <label className="flex w-full flex-col items-start gap-1.5 text-xs font-semibold text-white sm:w-auto sm:flex-row sm:items-center sm:gap-2">Bulan acara
+        <input type="month" aria-label="Bulan acara" value={monthFilter} onChange={event => setMonthFilter(event.target.value)} className="finance-recap-month-input min-h-[44px] w-full rounded-xl border-2 border-white bg-white px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm outline-none focus:border-white focus:ring-4 focus:ring-white/25 sm:w-[190px]" style={{ color: '#1f2937', WebkitTextFillColor: '#1f2937', colorScheme: 'light' }} />
       </label>
     </div>
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -58,13 +59,17 @@ const ClientFinanceRecapView: React.FC<Props> = ({ clients, projects, transactio
     </div>
     {rows.length === 0 ? <div className="rounded-2xl border border-[#CBD5E1] bg-white p-8 text-center text-sm text-[#5A6A85]">Belum ada acara pada periode ini.</div> : rows.map(({ project, client, incomes, expenses, packageAmount, addOns, additionalPackages, expenseTotal, incomeTotal, contractedIncome }) => {
       const expanded = expandedId === project.id;
-      return <article key={project.id} className="overflow-hidden rounded-xl border border-[#CBD5E1] bg-white sm:rounded-2xl sm:shadow-sm">
-        <button type="button" onClick={() => setExpandedId(expanded ? null : project.id)} className="grid w-full grid-cols-2 gap-2 p-2.5 text-left sm:grid-cols-[minmax(0,1.5fr)_repeat(4,minmax(0,1fr))] sm:items-center sm:gap-3 sm:p-4">
+      return <article key={project.id} className="overflow-hidden rounded-xl border border-brand-accent/20 bg-brand-accent/5 sm:rounded-2xl sm:shadow-sm">
+        <button type="button" aria-expanded={expanded} onClick={() => setExpandedId(expanded ? null : project.id)} className="grid w-full grid-cols-2 gap-2 bg-transparent p-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-accent sm:grid-cols-[minmax(0,1.5fr)_repeat(4,minmax(0,1fr))] sm:items-center sm:gap-3 sm:p-4">
           <span className="col-span-2 min-w-0 sm:col-span-1"><strong className="block truncate text-xs font-semibold text-[#2A3547] sm:text-sm sm:font-bold">{client?.name || project.clientName || 'Pengantin'}</strong><span className="mt-0.5 block truncate text-[10px] text-[#718096] sm:mt-1 sm:text-xs">{project.projectName || project.packageName || 'Acara'} · {project.date ? new Date(`${project.date.slice(0, 10)}T00:00:00`).toLocaleDateString('id-ID', { dateStyle: 'medium' }) : 'Tanggal belum diatur'}</span></span>
-          <Metric label="Total Paket" value={money(contractedIncome)} />
-          <Metric label="Pemasukan" value={money(incomeTotal)} green />
-          <Metric label="Pengeluaran" value={money(expenseTotal)} red />
-          <Metric label="Laba bersih" value={money(incomeTotal - expenseTotal)} green={incomeTotal >= expenseTotal} red={incomeTotal < expenseTotal} />
+          <Metric label="Total Paket" value={money(contractedIncome)} tone="package" />
+          <Metric label="Pemasukan" value={money(incomeTotal)} tone="income" />
+          <Metric label="Pengeluaran" value={money(expenseTotal)} tone="expense" />
+          <Metric label="Laba bersih" value={money(incomeTotal - expenseTotal)} tone={incomeTotal >= expenseTotal ? 'profit' : 'loss'} />
+          <span className="col-span-2 flex items-center justify-center gap-1 border-t border-brand-border pt-2 text-[11px] font-semibold text-brand-accent sm:col-span-5 sm:justify-end">
+            {expanded ? 'Sembunyikan rincian transaksi' : 'Lihat rincian transaksi'}
+            {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+          </span>
         </button>
         {expanded && <div className="grid gap-4 border-t border-[#CBD5E1] bg-white p-4 lg:grid-cols-3">
           <Ledger title="Rincian Total Paket" total={money(contractedIncome)} tone="package">
@@ -87,19 +92,18 @@ const ClientFinanceRecapView: React.FC<Props> = ({ clients, projects, transactio
 };
 
 const Summary = ({ label, value, tone }: { label: string; value: string; tone: 'package' | 'income' | 'expense' }) => {
-  const color = tone === 'package' ? 'bg-blue-700 border-blue-800' : tone === 'income' ? 'bg-emerald-700 border-emerald-800' : 'bg-rose-700 border-rose-800';
-  return <div className={`rounded-xl border ${color} p-4 text-white`}><p className="text-xs font-medium text-white">{label}</p><p className="mt-1 text-base font-bold text-white">{value}</p></div>;
+  const shade = tone === 'package' ? '100%' : tone === 'income' ? '88%' : '76%';
+  return <div className="rounded-xl border border-brand-accent p-4 text-white" style={{ backgroundColor: `color-mix(in srgb, var(--color-accent) ${shade}, black)` }}><p className="text-xs font-medium text-white">{label}</p><p className="mt-1 text-base font-bold text-white">{value}</p></div>;
 };
-const Metric = ({ label, value, green = false, red = false }: { label: string; value: string; green?: boolean; red?: boolean }) => <span className="min-w-0 rounded-lg border border-[#CBD5E1] bg-white px-2 py-1.5 sm:rounded-none sm:border-0 sm:bg-white sm:p-0"><span className="block text-[9px] text-[#718096] sm:text-[11px] sm:text-[#5A6A85]">{label}</span><strong className={`mt-0.5 block truncate text-[11px] font-medium sm:mt-1 sm:text-sm sm:font-semibold ${green ? 'text-emerald-700' : red ? 'text-rose-600' : 'text-[#374151]'}`}>{value}</strong></span>;
+const Metric = ({ label, value, tone }: { label: string; value: string; tone: 'package' | 'income' | 'expense' | 'profit' | 'loss' }) => {
+  const shade = { package: '100%', income: '90%', expense: '80%', profit: '70%', loss: '60%' }[tone];
+  return <span className="min-w-0 rounded-lg border border-brand-accent px-2 py-1.5 text-white shadow-sm sm:px-2.5 sm:py-2" style={{ backgroundColor: `color-mix(in srgb, var(--color-accent) ${shade}, black)` }}>
+    <span className="block text-[9px] font-medium text-white/90 sm:text-[10px]">{label}</span>
+    <strong className="mt-0.5 block truncate text-[11px] font-semibold text-white sm:mt-1 sm:text-xs">{value}</strong>
+  </span>;
+};
 const Ledger = ({ title, total, tone, children }: { title: string; total: string; tone?: 'package' | 'income' | 'expense'; children: React.ReactNode }) => {
-  const colors = tone === 'income'
-    ? { border: 'border-emerald-700', header: 'bg-emerald-700' }
-    : tone === 'expense'
-      ? { border: 'border-rose-700', header: 'bg-rose-700' }
-      : tone === 'package'
-        ? { border: 'border-blue-700', header: 'bg-blue-700' }
-        : { border: 'border-[#CBD5E1]', header: 'bg-[#374151]' };
-  return <div className={`min-w-0 overflow-hidden rounded-xl border-2 ${colors.border} bg-white`}><div className={`flex items-center justify-between gap-2 ${colors.header} px-3 py-2 text-white`}><strong className="text-xs text-white">{title}</strong><strong className="shrink-0 text-xs text-white">{total}</strong></div><div className="space-y-2 p-3">{children}</div></div>;
+  return <div className="min-w-0 overflow-hidden rounded-xl border-2 border-brand-accent bg-white"><div className="flex items-center justify-between gap-2 bg-brand-accent px-3 py-2 text-white"><strong className="text-xs text-white">{title}</strong><strong className="shrink-0 text-xs text-white">{total}</strong></div><div className="space-y-2 p-3">{children}</div></div>;
 };
 const Line = ({ label, value, tone }: { label: string; value: string; tone?: 'income' | 'expense' }) => <div className="flex items-start justify-between gap-3 border-t border-[#CBD5E1] pt-2 text-xs"><span className="min-w-0 break-words text-[#5A6A85]">{label}</span><span className={`shrink-0 font-semibold ${tone === 'income' ? 'text-emerald-700' : tone === 'expense' ? 'text-rose-600' : 'text-[#2A3547]'}`}>{value}</span></div>;
 const Empty = ({ children }: { children: React.ReactNode }) => <p className="border-t border-[#CBD5E1] pt-2 text-xs text-[#5A6A85]">{children}</p>;

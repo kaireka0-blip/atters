@@ -7,11 +7,12 @@ import TablePagination from '../../shared/ui/TablePagination';
 const escapeRegExp = (string: string) => {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
 };
-import { Lead, LeadStatus, Client, ClientStatus, Project, Package, AddOn, Transaction, TransactionType, PaymentStatus, Profile, Card, FinancialPocket, ContactChannel, PromoCode, ClientType, ViewType, NavigationAction, Gallery, REGIONS } from '../../types';
+import { Lead, LeadStatus, Client, ClientStatus, Project, Package, AddOn, Transaction, TransactionType, PaymentStatus, Profile, Card, FinancialPocket, ContactChannel, PromoCode, ClientType, ViewType, NavigationAction, Gallery } from '../../types';
+import { buildPackageRegionOptions } from '../../utils/packageRegions';
 
 import Modal from '../../shared/ui/Modal';
 import RupiahInput from '../../shared/form/RupiahInput';
-import { PlusIcon, PencilIcon, Trash2Icon, Share2Icon, DownloadIcon, SendIcon, UsersIcon, TargetIcon, TrendingUpIcon, CalendarIcon, MapPinIcon, QrCodeIcon, MessageSquareIcon, CameraIcon, FileTextIcon, PhoneIncomingIcon, LightbulbIcon, ChevronRightIcon, CheckCircleIcon, EyeIcon, LinkIcon, WhatsappIcon } from '../../constants';
+import { PlusIcon, PencilIcon, Trash2Icon, Share2Icon, DownloadIcon, SendIcon, UsersIcon, TargetIcon, TrendingUpIcon, CalendarIcon, MapPinIcon, QrCodeIcon, MessageSquareIcon, CameraIcon, FileTextIcon, PhoneIncomingIcon, LightbulbIcon, ChevronRightIcon, CheckCircleIcon, EyeIcon, LinkIcon, WhatsappIcon, DEFAULT_PACKAGE_SHARE_TEMPLATE, DEFAULT_BOOKING_FORM_TEMPLATE } from '../../constants';
 import { ModernStatCard } from '../../components/modernize/ModernStatCard';
 import { cleanPhoneNumber, resolveLeadStatus } from '../../constants';
 import { listLeads as _listLeads, createLead as createLeadRow, updateLead as updateLeadRow, deleteLead as deleteLeadRow } from '../../services/leads';
@@ -710,11 +711,10 @@ export const Leads: React.FC<LeadsProps> = ({
     const publicBookingFormUrl = useMemo(() => buildPublicShareUrl('booking'), []);
     const publicPackagesUrl = useMemo(() => buildPublicShareUrl('packages'), []);
 
-    // Daftar wilayah untuk tautan booking: gabungan wilayah bawaan (REGIONS) dengan
+    // Daftar wilayah untuk tautan booking: tag yang dikelola admin digabung dengan
     // wilayah kustom yang diisi pada paket & add-on (mis. "PACKAGE KASTEM"), supaya
     // tautan per wilayahnya ikut muncul dan bisa dibagikan.
     const unionRegions = useMemo(() => {
-        const baseValues = REGIONS.map(r => r.value.toLowerCase());
         const extraValues = new Set<string>();
         packages.forEach(p => {
             const region = String(p.region || '').trim();
@@ -724,14 +724,8 @@ export const Leads: React.FC<LeadsProps> = ({
             const region = String(a.region || '').trim();
             if (region) extraValues.add(region);
         });
-        const extra = Array.from(extraValues)
-            .sort((a, b) => a.localeCompare(b))
-            .filter(region => !baseValues.includes(region.toLowerCase()));
-        return [
-            ...REGIONS.map(r => ({ value: r.value, label: r.label })),
-            ...extra.map(region => ({ value: region, label: region.replace(/\b\w/g, c => c.toUpperCase()) })),
-        ];
-    }, [packages, addOns]);
+        return buildPackageRegionOptions(Array.from(extraValues).sort((a, b) => a.localeCompare(b)), userProfile.publicPageConfig?.packageRegions);
+    }, [packages, addOns, userProfile.publicPageConfig?.packageRegions]);
 
     const uniqueCities = useMemo(() => {
         const set = new Set<string>();
@@ -1099,10 +1093,18 @@ export const Leads: React.FC<LeadsProps> = ({
 
     const visibleLeadColumns = useMemo(() => Object.entries(leadColumns).filter(([status]) => !hiddenColumns.has(status as LeadStatus)), [leadColumns, hiddenColumns]);
 
-    const mobileColumnsToRender = useMemo(() => {
-        if (mobileStatusTab === 'all') return visibleLeadColumns;
-        return visibleLeadColumns.filter(([status]) => status === mobileStatusTab);
-    }, [visibleLeadColumns, mobileStatusTab]);
+    const paginatedLeadColumns = useMemo(() => {
+        const columns: Record<LeadStatus, Lead[]> = {
+            [LeadStatus.DISCUSSION]: [], [LeadStatus.FOLLOW_UP]: [], [LeadStatus.CONVERTED]: [], [LeadStatus.REJECTED]: [],
+        };
+        paginatedLeads.forEach(lead => { columns[lead.status]?.push(lead); });
+        return Object.entries(columns).filter(([status]) => !hiddenColumns.has(status as LeadStatus));
+    }, [paginatedLeads, hiddenColumns]);
+
+    const paginatedMobileColumns = useMemo(() => {
+        if (mobileStatusTab === 'all') return paginatedLeadColumns;
+        return paginatedLeadColumns.filter(([status]) => status === mobileStatusTab);
+    }, [paginatedLeadColumns, mobileStatusTab]);
 
     // ── Stat computations ─────────────────────────────────────────────────────
     const totalLeads = resolvedLeads.length;
@@ -1525,24 +1527,24 @@ export const Leads: React.FC<LeadsProps> = ({
                         </div>
 
                         {/* Desktop Search + City + Source row (or mobile expanded) */}
-                        <div className={`${mobileFiltersOpen ? 'flex' : 'hidden sm:flex'} flex-col sm:flex-row sm:items-center gap-3 w-full`}>
+                        <div className={`${mobileFiltersOpen ? 'flex' : 'hidden sm:flex'} flex-col sm:flex-row sm:items-center gap-2 w-full`}>
                             <div className="hidden sm:block flex-1 min-w-0 !mt-0">
-                                <input type="search" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="input-field !h-12 !min-h-0 !rounded-lg !border !bg-brand-bg px-3 text-sm placeholder:text-[#5A6A85] placeholder:opacity-100 w-full" placeholder="Cari Calon Pengantin / Kota / Catatan..." />
+                                <input type="search" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="input-field !h-10 !min-h-0 !rounded-lg !border !bg-brand-bg px-3 text-sm placeholder:text-[#5A6A85] placeholder:opacity-100 w-full" placeholder="Cari Calon Pengantin / Kota / Catatan..." />
                             </div>
-                            <select value={cityFilter} onChange={e => setCityFilter(e.target.value)} className="input-field !h-12 !min-h-0 !rounded-lg !border !bg-brand-bg px-3 py-2 text-xs sm:text-sm w-full sm:w-44">
+                            <select value={cityFilter} onChange={e => setCityFilter(e.target.value)} className="input-field !h-10 !min-h-0 !rounded-lg !border !bg-brand-bg px-3 py-1 text-xs sm:text-sm w-full sm:w-44">
                                 <option value="all">Semua Kota ({uniqueCities.length})</option>
                                 {uniqueCities.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
-                            <select value={sourceFilter} onChange={e => setSourceFilter(e.target.value as any)} className="input-field !h-12 !min-h-0 !rounded-lg !border !bg-brand-bg px-3 py-2 text-xs sm:text-sm w-full sm:w-44 leads-source-filter">
+                            <select value={sourceFilter} onChange={e => setSourceFilter(e.target.value as any)} className="input-field !h-10 !min-h-0 !rounded-lg !border !bg-brand-bg px-3 py-1 text-xs sm:text-sm w-full sm:w-44 leads-source-filter">
                                 <option value="all">Semua Sumber</option>
                                 {leadSourceOptions.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
                         </div>
                         
-                        <div className={`${mobileFiltersOpen ? 'flex' : 'hidden sm:flex'} flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full leads-filter-row`}>
+                        <div className={`${mobileFiltersOpen ? 'flex' : 'hidden sm:flex'} flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 w-full leads-filter-row`}>
                             <div className="grid grid-cols-2 gap-2 w-full sm:w-auto">
-                                <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="input-field !rounded-lg !border !bg-brand-bg p-2.5 sm:p-3 text-xs sm:text-sm w-full" title="Dari tanggal" />
-                                <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="input-field !rounded-lg !border !bg-brand-bg p-2.5 sm:p-3 text-xs sm:text-sm w-full" title="Sampai tanggal" />
+                                <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="input-field !h-10 !min-h-0 !rounded-lg !border !bg-brand-bg px-2.5 py-1.5 text-xs sm:text-sm w-full" title="Dari tanggal" />
+                                <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="input-field !h-10 !min-h-0 !rounded-lg !border !bg-brand-bg px-2.5 py-1.5 text-xs sm:text-sm w-full" title="Sampai tanggal" />
                             </div>
                             <div className="flex items-center justify-end gap-2 w-full sm:w-auto leads-filter-buttons">
                                 {/* View toggle */}
@@ -1592,7 +1594,7 @@ export const Leads: React.FC<LeadsProps> = ({
                                     onClick={() => setMobileStatusTab('all')}
                                     className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all cursor-pointer ${
                                         mobileStatusTab === 'all'
-                                            ? 'bg-[#3563E9] text-white shadow-xs'
+                                            ? 'bg-brand-accent text-white shadow-xs'
                                             : 'bg-white border border-[#EAEFF4] text-[#5A6A85] hover:bg-slate-50'
                                     }`}
                                 >
@@ -1625,7 +1627,7 @@ export const Leads: React.FC<LeadsProps> = ({
 
                             {/* Mobile grouped list */}
                             <div className="md:hidden space-y-3 -mx-2.5 px-2.5">
-                                {mobileColumnsToRender.map(([status, leadItems]) => {
+                                {paginatedMobileColumns.map(([status, leadItems]) => {
                                     const statusInfo = statusConfig[status as LeadStatus];
                                     return (
                                         <div key={status} className="bg-brand-bg rounded-2xl border border-brand-border overflow-hidden">
@@ -1658,7 +1660,7 @@ export const Leads: React.FC<LeadsProps> = ({
                             </div>
                             {/* Desktop kanban columns */}
                             <div className="hidden md:flex gap-4 overflow-x-auto pb-4 -mx-4 px-4">
-                                {visibleLeadColumns.map(([status, leadItems]) => {
+                                {paginatedLeadColumns.map(([status, leadItems]) => {
                                     const statusInfo = statusConfig[status as LeadStatus];
                                     return (
                                         <div key={status} onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, status as LeadStatus)} className="w-80 flex-shrink-0 rounded-2xl border border-[#EAEFF4] bg-[#F7F9FC] flex flex-col shadow-sm leads-column-container">
@@ -1687,6 +1689,16 @@ export const Leads: React.FC<LeadsProps> = ({
                                     );
                                 })}
                             </div>
+                            <TablePagination
+                                currentPage={currentPage}
+                                totalItems={filteredLeads.length}
+                                itemsPerPage={itemsPerPage}
+                                onPageChange={setCurrentPage}
+                                onItemsPerPageChange={setItemsPerPage}
+                                label="calon pengantin"
+                                pageSizeOptions={[10, 20, 50]}
+                                className="mt-2 rounded-xl border border-brand-border"
+                            />
                         </>
                     )}
 
@@ -1888,7 +1900,7 @@ export const Leads: React.FC<LeadsProps> = ({
                                 onPageChange={setCurrentPage}
                                 onItemsPerPageChange={setItemsPerPage}
                                 label="calon pengantin"
-                                pageSizeOptions={[10, 20, 50]}
+                                pageSizeOptions={[10, 20]}
                             />
                         </div>
                     )}
@@ -2328,13 +2340,15 @@ const ShareMessageModal: React.FC<ShareMessageModalProps> = ({ type, lead, userP
     useEffect(() => {
         let template = '';
         if (type === 'package') {
-            const raw = userProfile.packageShareTemplate || 'Halo {leadName},\n\nTerima kasih telah menghubungi {companyName}. Berikut tautan Pricelist & Paket lengkap kami yang dapat Anda lihat:\n\n{packageLink}\n\nSilakan pilih paket yang sesuai dan lakukan booking langsung melalui tautan di atas ya!\n\nSalam,\n{companyName}';
+            const saved = userProfile.packageShareTemplate?.trim();
+            const raw = !saved || saved === 'Halo {leadName}!' ? DEFAULT_PACKAGE_SHARE_TEMPLATE : saved;
             template = raw
                 .replace('{leadName}', lead.name)
                 .replace('{companyName}', userProfile.companyName)
                 .replace('{packageLink}', activePackageLink);
         } else {
-            const raw = userProfile.bookingFormTemplate || 'Halo {leadName},\n\nTerima kasih atas ketertarikan Anda menggunakan layanan {companyName}.\n\nBerikut tautan formulir booking resmi kami untuk melengkapi data Acara Pernikahan Anda:\n\n{bookingFormLink}\n\nMohon lengkapi formulir tersebut agar jadwal Anda dapat segera kami kunci.\n\nSalam,\n{companyName}';
+            const saved = userProfile.bookingFormTemplate?.trim();
+            const raw = !saved || saved === 'Halo {leadName}!' ? DEFAULT_BOOKING_FORM_TEMPLATE : saved;
             template = raw
                 .replace('{leadName}', lead.name)
                 .replace('{companyName}', userProfile.companyName)

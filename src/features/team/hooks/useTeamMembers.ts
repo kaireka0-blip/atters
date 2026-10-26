@@ -235,7 +235,7 @@ export const useTeamMembers = ({
     // ── Detail modal handlers ────────────────────────────────────────────────
     const handleViewDetails = useCallback((member: TeamMember) => {
         setSelectedMember(member);
-        setDetailTab('projects');
+        setDetailTab(member.category === 'Karyawan' ? 'salary' : 'projects');
         setIsDetailOpen(true);
     }, []);
 

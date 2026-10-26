@@ -1,11 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Project, Client, Transaction, TransactionType, ViewType, TeamMember, Card, FinancialPocket, PocketType, Lead, LeadStatus, TeamProjectPayment, Package, ClientFeedback, ClientStatus, NavigationAction, User, ProjectStatusConfig, Profile, PaymentStatus, CalendarEvent } from '../../types';
-import { listCalendarEventsInRange } from '../../services/calendarEvents';
-import { useCalendarEventsQuery } from '../../hooks/queries';
+import React, { useMemo, useState } from 'react';
+import { Project, Client, Transaction, TransactionType, ViewType, TeamMember, Card, FinancialPocket, Lead, LeadStatus, TeamProjectPayment, ClientFeedback, ClientStatus, NavigationAction, ProjectStatusConfig, Profile, PaymentStatus } from '../../types';
 import StatCardModal from '../../shared/ui/StatCardModal';
 import Modal from '../../shared/ui/Modal';
-import { NAV_ITEMS, DollarSignIcon, FolderKanbanIcon, UsersIcon, BriefcaseIcon, ChevronRightIcon, CreditCardIcon, CalendarIcon, ClipboardListIcon, LightbulbIcon, TargetIcon, StarIcon, CameraIcon, FileTextIcon, TrendingUpIcon, AlertCircleIcon, MapPinIcon, ClockIcon } from '../../constants';
-import { Breadcrumb, ModernStatCard, ModernBadge } from '../../components/modernize';
+import { DollarSignIcon, FolderKanbanIcon, UsersIcon, BriefcaseIcon, CalendarIcon, StarIcon, TrendingUpIcon, AlertCircleIcon, MapPinIcon } from '../../constants';
+import { ModernStatCard } from '../../components/modernize';
 import { MobileCollapsibleSection } from '../../components/ui/MobileProgressiveDisclosure';
 import { customizeNavigationLabel, customizeUiText, useUiTextOverrides } from '../../utils/uiTextCustomization';
 
@@ -34,38 +32,6 @@ const getStatusClass = (status: string, config: ProjectStatusConfig[]) => {
 
 
 // --- Sub-components for Dashboard ---
-
-const QuickLinksWidget: React.FC<{ handleNavigation: (view: ViewType) => void; currentUser: User | null; }> = ({ handleNavigation, currentUser }) => {
-    const uiTextOverrides = useUiTextOverrides();
-    const quickLinks = useMemo(() => {
-        const allLinks = NAV_ITEMS.filter(item => item.view !== ViewType.DASHBOARD);
-        if (!currentUser || currentUser.role === 'Admin') {
-            return allLinks;
-        }
-        const memberPermissions = new Set(currentUser.permissions || []);
-        return allLinks.filter(link => memberPermissions.has(link.view));
-    }, [currentUser]);
-
-
-    return (
-        <div className="bg-white p-4 sm:p-5 md:p-6 rounded-2xl border border-[#EAEFF4] shadow-[0_9px_17.5px_rgba(0,0,0,0.05)]">
-            <h3 className="font-bold text-base md:text-lg text-[#2A3547] mb-3 md:mb-4">Akses Cepat</h3>
-            <div className="grid grid-cols-2 gap-2 md:gap-4">
-                {quickLinks.map(link => (
-                    <button
-                        key={link.view}
-                        onClick={() => handleNavigation(link.view)}
-                        className="flex flex-col items-center justify-center p-3 md:p-4 bg-[#F4F6F9] rounded-xl text-center hover:bg-brand-accent/10 hover:border-brand-accent/25 border border-transparent hover:shadow-xs transition-all duration-200 active:scale-95"
-                        aria-label={`Buka ${customizeNavigationLabel(link.label, uiTextOverrides)}`}
-                    >
-                        <link.icon className="w-6 h-6 md:w-7 md:h-7 text-brand-accent mb-1.5 md:mb-2" />
-                        <span className="text-[11px] md:text-xs font-semibold text-[#2A3547]">{customizeNavigationLabel(link.label, uiTextOverrides)}</span>
-                    </button>
-                ))}
-            </div>
-        </div>
-    );
-};
 
 const IncomeChartWidget: React.FC<{ transactions: Transaction[]; projects?: Project[] }> = ({ transactions, projects = [] }) => {
     const [chartView, setChartView] = useState<'monthly' | 'yearly' | 'projection'>('monthly');
@@ -239,14 +205,23 @@ const IncomeChartWidget: React.FC<{ transactions: Transaction[]; projects?: Proj
 };
 
 
-const RecentTransactionsWidget: React.FC<{ transactions: Transaction[] }> = ({ transactions }) => (
+const RecentTransactionsWidget: React.FC<{ transactions: Transaction[]; handleNavigation: (view: ViewType) => void }> = ({ transactions, handleNavigation }) => {
+    const latestTransactions = [...transactions]
+        .sort((a, b) => {
+            const dateDifference = new Date(b.date).getTime() - new Date(a.date).getTime();
+            if (dateDifference !== 0) return dateDifference;
+            return new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime();
+        })
+        .slice(0, 5);
+
+    return (
     <div className="bg-white p-4 sm:p-5 md:p-6 rounded-2xl border border-[#EAEFF4] shadow-[0_9px_17.5px_rgba(0,0,0,0.05)] h-full">
         <div className="flex justify-between items-center mb-4">
             <h3 className="font-bold text-lg text-[#2A3547]">Transaksi Terbaru</h3>
-            <button className="p-3 text-[#5A6A85] hover:text-[#2A3547] rounded-lg hover:bg-[#F4F6F9]"><ChevronRightIcon className="w-5 h-5" /></button>
+            <button onClick={() => handleNavigation(ViewType.FINANCE)} className="p-2 text-sm font-semibold text-brand-accent hover:underline rounded-lg hover:bg-brand-accent/10">Lihat Semua &rarr;</button>
         </div>
         <div className="space-y-3.5">
-            {transactions.slice(0, 5).map(t => (
+            {latestTransactions.map(t => (
                 <div key={t.id} className="flex items-center gap-3.5">
                     <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center ${t.type === TransactionType.INCOME ? 'solid-green text-white' : 'bg-red-600 text-white'}`}>
                         <DollarSignIcon className="w-5 h-5" />
@@ -260,225 +235,21 @@ const RecentTransactionsWidget: React.FC<{ transactions: Transaction[] }> = ({ t
                     </div>
                 </div>
             ))}
+            {latestTransactions.length === 0 && <p className="py-8 text-center text-sm text-[#5A6A85]">Belum ada transaksi.</p>}
         </div>
     </div>
-);
-
-const CardWidget: React.FC<{ card: Card }> = ({ card }) => {
-    const gradient = card.colorGradient || 'from-slate-700 to-slate-900';
-    const isLight = gradient.includes('slate-100') || gradient.includes('slate-200') || gradient.includes('white');
-    const textColor = isLight ? 'text-slate-800' : 'text-white';
-
-    return (
-        <div className={`p-4 rounded-2xl ${textColor} shadow-md flex flex-col justify-between h-40 flex-1 min-w-64 bg-gradient-to-br ${gradient}`}>
-            <div>
-                <div className="flex justify-between items-center">
-                    <p className="font-bold text-sm">{card.bankName}</p>
-                    <p className="text-xs opacity-90">{card.cardType}</p>
-                </div>
-            </div>
-            <div>
-                <p className="text-xl font-mono tracking-wider">**** {card.lastFourDigits}</p>
-                <p className="text-2xl font-extrabold tracking-tight">{formatCurrency(card.balance)}</p>
-            </div>
-        </div>
-    );
-};
-
-const MyCardsWidget: React.FC<{ cards: Card[], handleNavigation: (view: ViewType) => void }> = ({ cards, handleNavigation }) => (
-    <div className="bg-white p-4 sm:p-5 md:p-6 rounded-2xl border border-[#EAEFF4] shadow-[0_9px_17.5px_rgba(0,0,0,0.05)] h-full">
-        <div className="flex justify-between items-center mb-4">
-            <h3 className="font-bold text-lg text-[#2A3547] flex items-center gap-2"><CreditCardIcon className="w-5 h-5 text-brand-accent" /> Kartu Saya</h3>
-            <button onClick={() => handleNavigation(ViewType.FINANCE)} className="p-2 text-sm font-semibold text-brand-accent hover:underline rounded-lg hover:bg-brand-accent/10">Kelola Kartu &rarr;</button>
-        </div>
-        <div className="flex flex-wrap gap-4">
-            {cards.map(card => <CardWidget key={card.id} card={card} />)}
-        </div>
-    </div>
-);
-
-const weekdaysShort = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
-const eventTypeColors: Record<string, string> = {
-    'Meeting Pengantin': '#3b82f6',
-    'Survey Lokasi': '#22c55e',
-    'Libur': '#94a3b8',
-    'Workshop': '#a855f7',
-    'Lainnya': '#eab308',
-};
-
-interface DashboardCalendarItem {
-    id: string;
-    date: string;
-    projectName: string;
-    projectType?: string;
-    status: string;
-    clientId?: string;
-}
-
-const getEventColor = (event: DashboardCalendarItem, profile: Profile) => {
-    const type = event.projectType?.toLowerCase() || '';
-    if (type.includes('wedding') || type.includes('pernikahan')) return '#ef4444'; // Merah
-    if (type.includes('engagement') || type.includes('lamaran')) return '#f97316'; // Orange
-    if (type.includes('meeting') || type.includes('internal')) return '#3b82f6'; // Biru
-    
-    const isInternalEvent = profile.eventTypes?.includes(event.projectType);
-    if (isInternalEvent) return eventTypeColors[event.projectType] || '#6366f1';
-    return profile.projectStatusConfig?.find(s => s.name === event.status)?.color || '#64748b';
-};
-
-/** Kalender bulan ringkas untuk Dashboard - menampilkan Acara Pernikahan & Acara Pernikahan internal */
-const CalendarMonthWidget: React.FC<{
-    projects: Project[];
-    profile: Profile;
-    handleNavigation: (view: ViewType, action?: NavigationAction) => void;
-}> = ({ projects, profile, handleNavigation }) => {
-    const [currentDate, setCurrentDate] = useState(new Date());
-    const [internalEvents, setInternalEvents] = useState<DashboardCalendarItem[]>([]);
-
-    useEffect(() => {
-        let isMounted = true;
-        (async () => {
-            try {
-                const from = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString().split('T')[0];
-                const to = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString().split('T')[0];
-                const rows = await listCalendarEventsInRange(from, to);
-                if (!isMounted) return;
-                setInternalEvents(
-                    (Array.isArray(rows) ? rows : []).map((event: CalendarEvent) => ({
-                        id: event.projectId || event.id,
-                        date: event.date || event.startAt,
-                        projectName: event.title,
-                        projectType: event.eventType,
-                        status: event.status,
-                        clientId: event.projectId || 'INTERNAL',
-                    })),
-                );
-            } catch {
-                setInternalEvents([]);
-            }
-        })();
-        return () => { isMounted = false; };
-    }, [currentDate]);
-
-    const deadlineEvents = useMemo(() =>
-        (projects || [])
-            .filter(p => (p as { deadlineDate?: string }).deadlineDate)
-            .map(p => ({
-                id: `${p.id}-deadline`,
-                projectName: `Deadline: ${p.projectName}`,
-                projectType: p.projectType,
-                status: p.status,
-                clientId: p.clientId,
-                date: (p as { deadlineDate?: string }).deadlineDate!,
-            })),
-        [projects]
-    );
-
-    const allEvents = useMemo<DashboardCalendarItem[]>(() => [
-        ...projects.map(({ id, date, projectName, projectType, status, clientId }) => ({
-            id, date, projectName, projectType, status, clientId,
-        })),
-        ...internalEvents,
-        ...deadlineEvents,
-    ], [projects, internalEvents, deadlineEvents]);
-
-    const { daysInMonth, eventsByDate } = useMemo(() => {
-        const first = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-        const last = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-        const start = new Date(first);
-        start.setDate(start.getDate() - start.getDay());
-        const end = new Date(last);
-        end.setDate(end.getDate() + (6 - end.getDay()));
-        const days: Date[] = [];
-        let d = new Date(start);
-        while (d <= end) {
-            days.push(new Date(d));
-            d.setDate(d.getDate() + 1);
-        }
-        const byDate = new Map<string, DashboardCalendarItem[]>();
-        allEvents.forEach(ev => {
-            const key = new Date(ev.date).toDateString();
-            if (!byDate.has(key)) byDate.set(key, []);
-            byDate.get(key)!.push(ev);
-        });
-        return { daysInMonth: days, eventsByDate: byDate };
-    }, [currentDate, allEvents]);
-
-    const prevMonth = () => setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() - 1));
-    const nextMonth = () => setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + 1));
-
-    return (
-        <div className="bg-white p-4 sm:p-5 md:p-6 rounded-2xl border border-[#EAEFF4] shadow-[0_9px_17.5px_rgba(0,0,0,0.05)]">
-            <div className="flex justify-between items-center mb-4">
-                <h3 className="font-bold text-lg text-[#2A3547] flex items-center gap-2">
-                    <CalendarIcon className="w-5 h-5 text-brand-accent" /> Kalender Acara
-                </h3>
-                <div className="flex items-center gap-2">
-                    <button onClick={prevMonth} className="p-3 rounded-lg hover:bg-[#F4F6F9] text-[#5A6A85] transition-colors" aria-label="Bulan sebelumnya">
-                        <ChevronRightIcon className="w-5 h-5 rotate-180" />
-                    </button>
-                    <span className="text-sm font-bold text-[#2A3547] min-w-[100px] text-center">
-                        {currentDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
-                    </span>
-                    <button onClick={nextMonth} className="p-3 rounded-lg hover:bg-[#F4F6F9] text-[#5A6A85] transition-colors" aria-label="Bulan berikutnya">
-                        <ChevronRightIcon className="w-5 h-5" />
-                    </button>
-                    <button onClick={() => handleNavigation(ViewType.CALENDAR)} className="p-2 text-sm font-bold text-brand-accent hover:underline ml-2 rounded-lg hover:bg-brand-accent/10">
-                        Kalender Lengkap &rarr;
-                    </button>
-                </div>
-            </div>
-            <div className="grid grid-cols-7 border border-[#EAEFF4] rounded-xl overflow-hidden">
-                {weekdaysShort.map(day => (
-                    <div key={day} className="bg-[#F4F6F9] py-2 text-center text-xs font-bold text-[#5A6A85] border-b border-r border-[#EAEFF4] last:border-r-0">
-                        {day}
-                    </div>
-                ))}
-                {daysInMonth.map((day, i) => {
-                    const isCurrentMonth = day.getMonth() === currentDate.getMonth();
-                    const isToday = day.toDateString() === new Date().toDateString();
-                    const events = eventsByDate.get(day.toDateString()) || [];
-                    return (
-                        <div
-                            key={i}
-                            className={`min-h-[64px] sm:min-h-[80px] p-1 border-b border-r border-[#EAEFF4] last:border-r-0 ${isCurrentMonth ? 'bg-white' : 'bg-[#FAFCFE]'}`}
-                        >
-                            <span className={`inline-flex items-center justify-center w-6 h-6 text-xs font-bold rounded-full ${isCurrentMonth ? 'text-[#2A3547]' : 'text-[#5A6A85]/40'} ${isToday ? 'bg-brand-accent text-white shadow-xs' : ''}`}>
-                                {day.getDate()}
-                            </span>
-                            <div className="mt-0.5 space-y-0.5 overflow-hidden">
-                                {events.slice(0, 2).map(ev => (
-                                    <div
-                                        key={ev.id}
-                                        onClick={(e) => {
-                                             e.stopPropagation();
-                                             if (ev.clientId === 'INTERNAL') {
-                                                 handleNavigation(ViewType.CALENDAR);
-                                             } else {
-                                                 handleNavigation(ViewType.CLIENTS, { type: 'VIEW_CLIENT_DETAILS', id: ev.clientId });
-                                             }
-                                        }}
-                                        className="text-[10px] px-1.5 py-0.5 rounded text-white truncate cursor-pointer font-semibold shadow-2xs"
-                                        style={{ backgroundColor: getEventColor(ev, profile) }}
-                                    >
-                                        {ev.projectName}
-                                    </div>
-                                ))}
-                                {events.length > 2 && (
-                                    <span className="text-[10px] font-bold text-brand-accent">+{events.length - 2} lagi</span>
-                                )}
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-        </div>
     );
 };
 
 const UpcomingCalendarWidget: React.FC<{ projects: Project[], handleNavigation: (view: ViewType, action?: NavigationAction) => void }> = ({ projects, handleNavigation }) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const upcoming = projects
-        .filter(p => new Date(p.date) >= new Date())
+        .filter(p => {
+            const eventDate = new Date(p.date);
+            eventDate.setHours(0, 0, 0, 0);
+            return !Number.isNaN(eventDate.getTime()) && eventDate >= today && p.status !== 'Selesai' && p.status !== 'Dibatalkan';
+        })
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
         .slice(0, 5);
 
@@ -566,29 +337,35 @@ const ProjectStatusWidget: React.FC<{ projects: Project[], projectStatusConfig: 
     );
 };
 
-const LeadsSummaryWidget: React.FC<{ leads: Lead[]; handleNavigation: (view: ViewType) => void }> = ({ leads, handleNavigation }) => {
-    const newLeadsThisMonth = leads.filter(l => new Date(l.date).getMonth() === new Date().getMonth() && new Date(l.date).getFullYear() === new Date().getFullYear()).length;
-    const convertedLeads = leads.filter(l => l.status === LeadStatus.CONVERTED).length;
-    const conversionRate = leads.length > 0 ? (convertedLeads / leads.length) * 100 : 0;
-
-    const SmallStat: React.FC<{ icon: React.ReactNode; title: string; value: string; }> = ({ icon, title, value }) => (
-        <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl grad-brand flex items-center justify-center text-white flex-shrink-0">{icon}</div>
-            <div>
-                <p className="text-xs font-medium text-[#5A6A85]">{title}</p>
-                <p className="font-extrabold text-lg text-[#2A3547]">{value}</p>
-            </div>
-        </div>
-    );
+const LatestLeadsWidget: React.FC<{ leads: Lead[]; handleNavigation: (view: ViewType) => void }> = ({ leads, handleNavigation }) => {
+    const latestLeads = [...leads]
+        .sort((a, b) => new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime())
+        .slice(0, 5);
+    const statusColors: Record<LeadStatus, string> = {
+        [LeadStatus.DISCUSSION]: 'bg-blue-100 text-blue-800',
+        [LeadStatus.FOLLOW_UP]: 'bg-amber-100 text-amber-800',
+        [LeadStatus.CONVERTED]: 'bg-emerald-100 text-emerald-800',
+        [LeadStatus.REJECTED]: 'bg-rose-100 text-rose-800',
+    };
 
     return (
-        <div className="bg-white p-5 md:p-6 rounded-2xl border border-[#EAEFF4] shadow-[0_9px_17.5px_rgba(0,0,0,0.05)] h-full flex flex-col justify-between">
-            <h3 className="font-bold text-lg text-[#2A3547] mb-4">Ringkasan Calon Pengantin</h3>
-            <div className="space-y-4 flex-grow">
-                <SmallStat icon={<LightbulbIcon className="w-5 h-5" />} title="Calon Pengantin Baru Bulan Ini" value={newLeadsThisMonth.toString()} />
-                <SmallStat icon={<TargetIcon className="w-5 h-5" />} title="Tingkat Konversi" value={`${conversionRate.toFixed(1)}%`} />
+        <div className="bg-white p-5 md:p-6 rounded-2xl border border-[#EAEFF4] shadow-[0_9px_17.5px_rgba(0,0,0,0.05)] h-full">
+            <div className="mb-4 flex items-center justify-between gap-3">
+                <h3 className="font-bold text-lg text-[#2A3547]">Prospek Terbaru</h3>
+                <button onClick={() => handleNavigation(ViewType['Calon Pengantin'])} className="shrink-0 rounded-lg px-2 py-1 text-sm font-semibold text-brand-accent hover:bg-brand-accent/10">Semua &rarr;</button>
             </div>
-            <button onClick={() => handleNavigation(ViewType["Calon Pengantin"])} className="p-2 mt-4 text-sm font-semibold text-brand-accent hover:underline self-start rounded-lg hover:bg-brand-accent/10">Kelola Calon Pengantin &rarr;</button>
+            <div className="space-y-3">
+                {latestLeads.map(lead => (
+                    <div key={lead.id} className="flex items-center justify-between gap-3 rounded-xl border border-[#EAEFF4] bg-[#F8FAFC] p-3">
+                        <div className="min-w-0">
+                            <p className="truncate text-sm font-bold text-[#2A3547]">{lead.name}</p>
+                            <p className="mt-0.5 text-xs text-[#5A6A85]">{new Date(lead.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })} · {lead.contactChannel}</p>
+                        </div>
+                        <span className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-bold ${statusColors[lead.status] || 'bg-slate-100 text-slate-700'}`}>{lead.status}</span>
+                    </div>
+                ))}
+                {latestLeads.length === 0 && <p className="py-8 text-center text-sm text-[#5A6A85]">Belum ada prospek.</p>}
+            </div>
         </div>
     );
 };
@@ -610,42 +387,6 @@ const ClientSatisfactionWidget: React.FC<{ feedback: ClientFeedback[]; handleNav
                 <p className="text-xs text-[#5A6A85]">Berdasarkan {totalFeedback} ulasan kepuasan.</p>
             </div>
             <button onClick={() => handleNavigation(ViewType.CLIENT_REPORTS)} className="p-2 mt-4 text-sm font-semibold text-brand-accent hover:underline self-start rounded-lg hover:bg-brand-accent/10">Lihat Laporan &rarr;</button>
-        </div>
-    );
-};
-
-const BookingTrendWidget: React.FC<{ projects: Project[] }> = ({ projects }) => {
-    const monthlyBookings = useMemo(() => {
-        const currentYear = new Date().getFullYear();
-        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        const data = months.map(month => ({ name: month, count: 0 }));
-
-        projects.forEach(p => {
-            const d = new Date(p.date);
-            if (d.getFullYear() === currentYear) {
-                data[d.getMonth()].count += 1;
-            }
-        });
-        return data;
-    }, [projects]);
-
-    const maxCount = Math.max(...monthlyBookings.map(d => d.count), 1);
-
-    return (
-        <div className="bg-white p-5 md:p-6 rounded-2xl border border-[#EAEFF4] shadow-[0_9px_17.5px_rgba(0,0,0,0.05)] h-full">
-            <h3 className="font-bold text-lg text-[#2A3547] mb-6">Tren Booking (Wedding Date)</h3>
-            <div className="h-44 flex justify-between items-end gap-1">
-                {monthlyBookings.map(item => {
-                    const height = (item.count / maxCount) * 100;
-                    return (
-                        <div key={item.name} className="flex-1 flex flex-col items-center group relative">
-                            <div className="absolute -top-8 bg-[#2A3547] text-white text-[10px] font-bold px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">{item.count} Wedding</div>
-                            <div className="w-full grad-indigo rounded-t-lg group-hover:opacity-85 transition-opacity" style={{ height: `${Math.max(height, 5)}%` }}></div>
-                            <span className="text-[10px] font-bold text-[#5A6A85] mt-2 uppercase">{item.name}</span>
-                        </div>
-                    );
-                })}
-            </div>
         </div>
     );
 };
@@ -761,22 +502,23 @@ const LeadSourceWidget: React.FC<{ leads: Lead[] }> = ({ leads }) => {
     );
 };
 
-const BusinessHealthWidget: React.FC<{ projects: Project[], transactions: Transaction[] }> = ({ projects, transactions }) => {
+const BusinessHealthWidget: React.FC<{ transactions: Transaction[] }> = ({ transactions }) => {
     const stats = useMemo(() => {
-        const totalRevenue = transactions.filter(t => t.type === TransactionType.INCOME).reduce((s, t) => s + t.amount, 0);
-        const totalExpense = transactions.filter(t => t.type === TransactionType.EXPENSE).reduce((s, t) => s + t.amount, 0);
-        const margin = totalRevenue > 0 ? ((totalRevenue - totalExpense) / totalRevenue) * 100 : 0;
-        
-        const completed = projects.filter(p => p.status === 'Selesai').length;
-        const total = projects.length || 1;
-        const successRate = (completed / total) * 100;
+        const now = new Date();
+        const monthTransactions = transactions.filter(transaction => {
+            const date = new Date(transaction.date);
+            return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
+        });
+        const monthlyRevenue = monthTransactions.filter(t => t.type === TransactionType.INCOME).reduce((sum, t) => sum + t.amount, 0);
+        const monthlyExpense = monthTransactions.filter(t => t.type === TransactionType.EXPENSE).reduce((sum, t) => sum + t.amount, 0);
+        const margin = monthlyRevenue > 0 ? ((monthlyRevenue - monthlyExpense) / monthlyRevenue) * 100 : 0;
 
         return [
-            { label: 'Profit Margin', value: `${margin.toFixed(1)}%`, icon: <TrendingUpIcon className="w-4 h-4" />, iconBg: 'grad-green', iconColor: 'text-white', valueColor: 'text-green-700' },
-            { label: 'Project Success', value: `${successRate.toFixed(1)}%`, icon: <StarIcon className="w-4 h-4" />, iconBg: 'grad-brand', iconColor: 'text-white', valueColor: 'text-brand-accent' },
-            { label: 'Avg Revenue/Acara', value: formatCurrency(totalRevenue / total, 0), icon: <DollarSignIcon className="w-4 h-4" />, iconBg: 'grad-orange', iconColor: 'text-white', valueColor: 'text-orange-700' },
+            { label: 'Pemasukan Bulan Ini', value: formatCurrency(monthlyRevenue), icon: <TrendingUpIcon className="w-4 h-4" />, iconBg: 'grad-green', iconColor: 'text-white', valueColor: 'text-green-700' },
+            { label: 'Pengeluaran Bulan Ini', value: formatCurrency(monthlyExpense), icon: <DollarSignIcon className="w-4 h-4" />, iconBg: 'grad-orange', iconColor: 'text-white', valueColor: 'text-orange-700' },
+            { label: 'Margin Bulan Ini', value: `${margin.toFixed(1)}%`, icon: <StarIcon className="w-4 h-4" />, iconBg: 'grad-brand', iconColor: 'text-white', valueColor: 'text-brand-accent' },
         ];
-    }, [projects, transactions]);
+    }, [transactions]);
 
     return (
         <div className="bg-white p-5 md:p-6 rounded-2xl border border-[#EAEFF4] shadow-[0_9px_17.5px_rgba(0,0,0,0.05)] h-full">
@@ -821,9 +563,7 @@ interface DashboardProps {
     handleNavigation: (view: ViewType, action?: NavigationAction) => void;
     leads: Lead[];
     teamProjectPayments: TeamProjectPayment[];
-    packages: Package[];
     clientFeedback: ClientFeedback[];
-    currentUser: User | null;
     projectStatusConfig: ProjectStatusConfig[];
     profile: Profile;
     totals?: typeof EMPTY_DASHBOARD_TOTALS;
@@ -839,9 +579,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     handleNavigation,
     leads = [],
     teamProjectPayments = [],
-    packages = [],
     clientFeedback = [],
-    currentUser,
     projectStatusConfig = [],
     profile,
     totals,
@@ -947,11 +685,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                     title="Pendapatan Bulan Ini"
                     value={formatCurrency(summary.incomeThisMonth)}
                     valueClassName="!text-[#166534]"
-                    subtitle={`Target: ${formatCurrency(50000000)}`}
+                    subtitle="Pemasukan yang tercatat bulan ini"
                     iconColorVariant="success"
                     compactOnMobile
-                    change="+12.5%"
-                    changeType="increase"
                 />
                 <ModernStatCard
                     icon={<FolderKanbanIcon className="w-6 h-6" />}
@@ -1047,17 +783,6 @@ const Dashboard: React.FC<DashboardProps> = ({
                     <div className="col-span-1 xl:col-span-5">
                         <ProjectStatusWidget projects={projects} projectStatusConfig={projectStatusConfig} handleNavigation={handleNavigation} />
                     </div>
-                    <div className="col-span-1 xl:col-span-12">
-                        <MobileCollapsibleSection
-                            title="Kalender Acara Bulan Ini"
-                            subtitle="Lihat jadwal lengkap bulanan"
-                            variant="card"
-                            actionLabelOpen="Lihat Kalender"
-                            actionLabelClose="Tutup"
-                        >
-                            <CalendarMonthWidget projects={projects} profile={profile} handleNavigation={handleNavigation} />
-                        </MobileCollapsibleSection>
-                    </div>
                 </div>
             </div>
 
@@ -1081,13 +806,10 @@ const Dashboard: React.FC<DashboardProps> = ({
                             <IncomeChartWidget transactions={transactions} projects={projects} />
                         </div>
                         <div className="col-span-1 xl:col-span-4">
-                            <BusinessHealthWidget projects={projects} transactions={transactions} />
+                            <BusinessHealthWidget transactions={transactions} />
                         </div>
-                        <div className="col-span-1 xl:col-span-7">
-                            <MyCardsWidget cards={cards} handleNavigation={handleNavigation} />
-                        </div>
-                        <div className="col-span-1 xl:col-span-5">
-                            <RecentTransactionsWidget transactions={transactions} />
+                        <div className="col-span-1 xl:col-span-12">
+                            <RecentTransactionsWidget transactions={transactions} handleNavigation={handleNavigation} />
                         </div>
                     </div>
                 </div>
@@ -1119,27 +841,13 @@ const Dashboard: React.FC<DashboardProps> = ({
                             <PackageDistributionWidget projects={projects} />
                         </div>
                         <div className="col-span-1">
-                            <LeadsSummaryWidget leads={leads} handleNavigation={handleNavigation} />
-                        </div>
-                        <div className="col-span-1">
-                            <BookingTrendWidget projects={projects} />
+                            <LatestLeadsWidget leads={leads} handleNavigation={handleNavigation} />
                         </div>
                         <div className="col-span-1">
                             <ClientSatisfactionWidget feedback={clientFeedback} handleNavigation={handleNavigation} />
                         </div>
                     </div>
                 </div>
-            </MobileCollapsibleSection>
-
-            {/* SECTION 4: Aksi Cepat */}
-            <MobileCollapsibleSection
-                title="Akses Cepat Menu"
-                subtitle="Pintasan navigasi halaman"
-                variant="card"
-                actionLabelOpen="Buka Pintasan"
-                actionLabelClose="Tutup"
-            >
-                <QuickLinksWidget handleNavigation={handleNavigation} currentUser={currentUser} />
             </MobileCollapsibleSection>
 
             {/* StatCard Detail Modals */}

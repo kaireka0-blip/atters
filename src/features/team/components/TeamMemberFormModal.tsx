@@ -14,7 +14,7 @@ export interface TeamMemberFormData {
     noRek: string;
     avatarUrl?: string;
     bankName?: string;
-    category?: 'Tim' | 'Vendor';
+    category?: 'Tim' | 'Karyawan' | 'Vendor';
 }
 
 export interface TeamMemberFormModalProps {
@@ -122,8 +122,8 @@ export const TeamMemberFormModal: React.FC<TeamMemberFormModalProps> = ({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="input-group">
                             <input type="text" id="name" name="name" value={formData.name} onChange={handleFormChange} className="input-field" placeholder=" " required />
-                            <label htmlFor="name" className="input-label">Nama Tim / Freelance</label>
-                            <p className="hidden sm:block text-xs text-brand-text-secondary mt-1">Nama lengkap anggota tim atau nama vendor</p>
+                        <label htmlFor="name" className="input-label">Nama Karyawan / Tim / Vendor</label>
+                        <p className="hidden sm:block text-xs text-brand-text-secondary mt-1">Nama lengkap karyawan, anggota tim, atau vendor</p>
                         </div>
                         <div className="input-group">
                             <input type="text" id="role" name="role" value={formData.role} onChange={handleFormChange} className="input-field" placeholder=" " required />
@@ -154,8 +154,8 @@ export const TeamMemberFormModal: React.FC<TeamMemberFormModalProps> = ({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="input-group">
                             <RupiahInput id="standardFee" value={formData.standardFee.toString()} onChange={(raw) => setFormData(prev => ({ ...prev, standardFee: Number(raw) }))} className="input-field" placeholder=" " />
-                            <label htmlFor="standardFee" className="input-label">Pembayaran Standar (IDR) (Opsional)</label>
-                            <p className="hidden sm:block text-xs text-brand-text-secondary mt-1">Pembayaran default per Acara Pernikahan dalam Rupiah</p>
+                            <label htmlFor="standardFee" className="input-label">{formData.category === 'Karyawan' ? 'Gaji Bulanan (IDR)' : 'Pembayaran Standar (IDR) (Opsional)'}</label>
+                            <p className="hidden sm:block text-xs text-brand-text-secondary mt-1">{formData.category === 'Karyawan' ? 'Nominal gaji bulanan. Pembayaran dan riwayatnya tersedia pada detail karyawan.' : 'Nominal default honor per acara dan dapat disesuaikan pada tab Pembayaran.'}</p>
                         </div>
                         <div className="input-group">
                             <input type="text" id="noRek" name="noRek" value={formData.noRek} onChange={handleFormChange} className="input-field" placeholder=" " />
@@ -176,10 +176,11 @@ export const TeamMemberFormModal: React.FC<TeamMemberFormModalProps> = ({
                             className="input-field"
                         >
                             <option value="Tim">Tim Internal</option>
+                            <option value="Karyawan">Karyawan</option>
                             <option value="Vendor">Vendor Eksternal</option>
                         </select>
                         <label htmlFor="category" className="input-label">Pilih Kategori</label>
-                        <p className="hidden sm:block text-xs text-brand-text-secondary mt-1">Pilih "Tim" untuk tim internal Anda, atau "Vendor" untuk pihak ketiga.</p>
+                        <p className="hidden sm:block text-xs text-brand-text-secondary mt-1">Karyawan dan Tim Internal masuk ke pembayaran honor. Vendor untuk pihak ketiga.</p>
                     </div>
                 </div>
 

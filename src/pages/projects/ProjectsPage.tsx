@@ -705,7 +705,7 @@ export const Projects: React.FC<ProjectsProps> = ({
                             onPageChange={setCurrentPage}
                             onItemsPerPageChange={setItemsPerPage}
                             label="acara"
-                            pageSizeOptions={[10, 20, 50]}
+                            pageSizeOptions={[10, 20]}
                         />
                     </div>
                 ) : (

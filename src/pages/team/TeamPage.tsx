@@ -133,6 +133,7 @@ export const Freelancers: React.FC<FreelancersProps> = ({
   // ── Local UI state ───────────────────────────────────────────────────────
   const [activeMainTab, setActiveMainTab] = useState<MainTab>('team');
   const [showExtendedTeamStats, setShowExtendedTeamStats] = useState(false);
+  const [showExtendedEmployeeStats, setShowExtendedEmployeeStats] = useState(false);
   const [showExtendedVendorStats, setShowExtendedVendorStats] = useState(false);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [activeStatModal, setActiveStatModal] = useState<ActiveStatModal | null>(null);
@@ -141,7 +142,7 @@ export const Freelancers: React.FC<FreelancersProps> = ({
   const filters = useTeamFilters({ teamMembers, teamProjectPayments, projects });
 
   // ── Stats hook ───────────────────────────────────────────────────────────
-  const { teamSectionStats, vendorSectionStats, teamStats } = useTeamStats({
+  const { teamSectionStats, employeeSectionStats, vendorSectionStats, teamStats } = useTeamStats({
     memberGroups: filters.memberGroups,
     teamMembers,
     teamProjectPaymentsInDateRange: filters.teamProjectPaymentsInDateRange,
@@ -212,6 +213,7 @@ export const Freelancers: React.FC<FreelancersProps> = ({
         activeTab={activeMainTab}
         onTabChange={setActiveMainTab}
         teamCount={filters.memberGroups.team.length}
+        employeeCount={filters.memberGroups.employee.length}
         vendorCount={filters.memberGroups.vendor.length}
         unpaidCount={filters.allUnpaidPayments.length}
       />
@@ -239,6 +241,34 @@ export const Freelancers: React.FC<FreelancersProps> = ({
             groupLabel="team"
             onViewDetails={members.handleViewDetails}
             onEditMember={(m) => members.handleOpenForm('edit', m)}
+            onDeleteMember={members.handleDelete}
+          />
+        </div>
+      )}
+
+      {/* ── Tab: Karyawan ────────────────────────────────────────────────── */}
+      {activeMainTab === 'employee' && (
+        <div className="space-y-4">
+          <TeamSectionStats
+            group="employee"
+            stats={employeeSectionStats}
+            showExtended={showExtendedEmployeeStats}
+            onToggleExtended={() => setShowExtendedEmployeeStats((previous) => !previous)}
+            onStatClick={(stat) => setActiveStatModal({ group: 'employee', stat })}
+          />
+          <TeamSearchBar
+            placeholder="Cari nama karyawan atau posisi..."
+            value={filters.employeeSearchQuery}
+            onChange={filters.setEmployeeSearchQuery}
+            resultCount={filters.uniqueEmployeeMembers.length}
+            resultLabel="karyawan"
+          />
+          <TeamMemberList
+            members={filters.uniqueEmployeeMembers}
+            teamProjectPaymentsInDateRange={filters.teamProjectPaymentsInDateRange}
+            groupLabel="employee"
+            onViewDetails={members.handleViewDetails}
+            onEditMember={(member) => members.handleOpenForm('edit', member)}
             onDeleteMember={members.handleDelete}
           />
         </div>
@@ -322,6 +352,8 @@ export const Freelancers: React.FC<FreelancersProps> = ({
             )
           }
           onProceedToPayment={payments.handleCreatePayment}
+          onPayProject={payments.handleCreateSinglePayment}
+          onPayMonthlySalary={payments.handlePayMonthlySalary}
           teamProjectPayments={teamProjectPayments}
           teamPaymentRecords={payments.uniqueTeamPaymentRecords}
           projects={projects}
@@ -417,6 +449,7 @@ export const Freelancers: React.FC<FreelancersProps> = ({
         teamProjectPaymentsInDateRange={filters.teamProjectPaymentsInDateRange}
         projects={projects}
         uniqueTeamMembers={filters.uniqueTeamMembers}
+        uniqueEmployeeMembers={filters.uniqueEmployeeMembers}
         uniqueVendorMembers={filters.uniqueVendorMembers}
         projectsInDateRange={filters.projectsInDateRange}
       />

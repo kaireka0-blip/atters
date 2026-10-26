@@ -348,7 +348,7 @@ export interface TeamMember {
   rating: number; // 1-5 star rating
   performanceNotes: PerformanceNote[];
   portalAccessId: string;
-  category: 'Tim' | 'Vendor';
+  category: 'Tim' | 'Karyawan' | 'Vendor';
   createdAt?: string;
   updatedAt?: string;
 }
@@ -589,6 +589,7 @@ export interface PublicPageConfig {
   };
   workflows?: WorkflowItem[]; // Dynamic CRUD workflows for public page & package catalog
   packageTerms?: PackageTermItem[]; // Dynamic CRUD terms and conditions for packages
+  packageRegions?: string[]; // Managed region tags used to group catalog packages and add-ons
   packageOrder?: string[]; // Ordered array of package IDs for display ordering
   addOnOrder?: string[]; // Ordered array of add-on IDs for display ordering
   socialMedia?: {

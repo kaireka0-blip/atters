@@ -21,7 +21,7 @@ import TablePagination from '../../../shared/ui/TablePagination';
 interface TeamMemberListProps {
     members: TeamMember[];
     teamProjectPaymentsInDateRange: TeamProjectPayment[];
-    groupLabel: 'team' | 'vendor';
+    groupLabel: 'team' | 'employee' | 'vendor';
     onViewDetails: (member: TeamMember) => void;
     onEditMember: (member: TeamMember) => void;
     onDeleteMember: (memberId: string) => void;
@@ -44,14 +44,14 @@ const TeamMemberList: React.FC<TeamMemberListProps> = ({
     const emptyMessage =
         groupLabel === 'team'
             ? 'Tidak ada data anggota tim yang cocok.'
-            : 'Tidak ada data vendor yang cocok.';
+            : groupLabel === 'employee' ? 'Tidak ada data karyawan yang cocok.' : 'Tidak ada data vendor yang cocok.';
 
     const emptySearchMessage =
         groupLabel === 'team'
             ? 'Tidak ada data anggota tim yang cocok dengan pencarian.'
-            : 'Tidak ada data vendor yang cocok dengan pencarian.';
+            : groupLabel === 'employee' ? 'Tidak ada data karyawan yang cocok dengan pencarian.' : 'Tidak ada data vendor yang cocok dengan pencarian.';
 
-    const nameHeader = groupLabel === 'vendor' ? 'Nama Vendor' : 'Nama';
+    const nameHeader = groupLabel === 'vendor' ? 'Nama Vendor' : groupLabel === 'employee' ? 'Nama Karyawan' : 'Nama';
     const roleHeader = groupLabel === 'vendor' ? 'Bidang / Layanan' : 'Peran / Posisi';
 
     const [currentPage, setCurrentPage] = React.useState(1);
@@ -112,9 +112,9 @@ const TeamMemberList: React.FC<TeamMemberListProps> = ({
                                 </div>
                             </div>
                             <div className="py-2.5 flex items-center justify-between text-xs border-b border-slate-100">
-                                <span className="text-[#5A6A85] font-medium">Pembayaran Belum Dibayar</span>
-                                <span className={`text-right font-bold ${unpaidFee > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
-                                    {formatCurrency(unpaidFee)}
+                                <span className="text-[#5A6A85] font-medium">{groupLabel === 'employee' ? 'Gaji Bulanan' : 'Pembayaran Belum Dibayar'}</span>
+                                <span className={`text-right font-bold ${groupLabel === 'employee' ? 'text-brand-accent' : unpaidFee > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                                    {formatCurrency(groupLabel === 'employee' ? member.standardFee : unpaidFee)}
                                 </span>
                             </div>
                             <MobileExpandableExtra
@@ -163,7 +163,7 @@ const TeamMemberList: React.FC<TeamMemberListProps> = ({
                             <th className="px-3 lg:px-4 py-3.5 text-center w-10 lg:w-14 border-r border-slate-200/70">No</th>
                             <th className="px-3 lg:px-4 py-3.5 text-left border-r border-slate-200/70">{nameHeader}</th>
                             <th className="px-3 lg:px-4 py-3.5 text-left border-r border-slate-200/70">{roleHeader}</th>
-                            <th className="px-3 lg:px-4 py-3.5 text-left border-r border-slate-200/70">Pembayaran Belum Dibayar</th>
+                            <th className="px-3 lg:px-4 py-3.5 text-left border-r border-slate-200/70">{groupLabel === 'employee' ? 'Gaji Bulanan' : 'Pembayaran Belum Dibayar'}</th>
                             <th className="px-3 lg:px-4 py-3.5 text-center border-r border-slate-200/70">Rating</th>
                             <th className="px-3 lg:px-4 py-3.5 text-center">Aksi</th>
                         </tr>
@@ -192,8 +192,8 @@ const TeamMemberList: React.FC<TeamMemberListProps> = ({
                                             {member.role}
                                         </span>
                                     </td>
-                                    <td className={`px-3 lg:px-4 py-3.5 font-bold whitespace-nowrap border-r border-slate-100 ${unpaidFee > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
-                                        {formatCurrency(unpaidFee)}
+                                    <td className={`px-3 lg:px-4 py-3.5 font-bold whitespace-nowrap border-r border-slate-100 ${groupLabel === 'employee' ? 'text-brand-accent' : unpaidFee > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                                        {formatCurrency(groupLabel === 'employee' ? member.standardFee : unpaidFee)}
                                     </td>
                                     <td className="px-3 lg:px-4 py-3.5 border-r border-slate-100">
                                         <div className="flex justify-center">
@@ -252,7 +252,7 @@ const TeamMemberList: React.FC<TeamMemberListProps> = ({
                 onPageChange={setCurrentPage}
                 onItemsPerPageChange={setItemsPerPage}
                 label={groupLabel === 'vendor' ? 'vendor' : 'anggota tim'}
-                pageSizeOptions={[10, 20, 50]}
+                pageSizeOptions={[10, 20]}
             />
         </div>
     );

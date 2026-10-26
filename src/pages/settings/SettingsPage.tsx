@@ -1887,8 +1887,9 @@ const Settings: React.FC<SettingsProps> = ({ profile, setProfile, transactions, 
                 return (
                     <form onSubmit={handleSubmit} className="form-compact form-compact--ios-scale">
                         <div className="space-y-4 md:space-y-6">
-                            <h3 className="text-sm md:text-lg font-semibold text-brand-text-light border-b border-gray-700/50 pb-2 md:pb-3">Informasi Publik</h3>
-                            <div className="space-y-3 md:space-y-4 max-w-2xl mx-auto">
+                            <section className="rounded-2xl border border-brand-accent/25 bg-white p-4 shadow-sm sm:p-5 md:p-6">
+                            <h3 className="mb-4 border-b border-brand-accent/25 pb-3 text-sm font-semibold text-brand-text-primary md:text-lg">Informasi Publik</h3>
+                            <div className="space-y-4 md:space-y-5 max-w-2xl mx-auto">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                                     <div className="input-group"><input id="fullName" type="text" name="fullName" value={localProfile.fullName || ''} onChange={handleInputChange} className="input-field" placeholder=" " /><label htmlFor="fullName" className="input-label">Nama Owner</label></div>
                                     <div className="input-group"><input id="companyName" type="text" name="companyName" value={localProfile.companyName || ''} onChange={handleInputChange} className="input-field" placeholder=" " /><label htmlFor="companyName" className="input-label">Nama Perusahaan</label></div>
@@ -1908,9 +1909,11 @@ const Settings: React.FC<SettingsProps> = ({ profile, setProfile, transactions, 
                                     <button type="button" onClick={() => setProfile(p => ({ ...p, briefingTemplate: DEFAULT_BRIEFING_TEMPLATE }))} className="text-xs text-brand-accent hover:underline mt-2">+ Gunakan contoh</button>
                                 </div>
                             </div>
+                            </section>
 
-                            <h3 className="text-sm md:text-lg font-semibold text-brand-text-light border-b border-gray-700/50 pb-2 md:pb-3 mt-6 md:mt-8">Akun Media Sosial</h3>
-                            <p className="text-xs text-brand-text-secondary max-w-2xl mx-auto -mt-2">
+                            <section className="rounded-2xl border border-brand-accent/25 bg-white p-4 shadow-sm sm:p-5 md:p-6">
+                            <h3 className="mb-3 border-b border-brand-accent/25 pb-3 text-sm font-semibold text-brand-text-primary md:text-lg">Akun Media Sosial</h3>
+                            <p className="text-xs text-brand-text-secondary max-w-2xl mx-auto mb-4">
                                 Tautan media sosial ini akan tampil di bagian bawah katalog pricelist &amp; paket publik (http://localhost:3000). Anda dapat memasukkan username (misal: <code>@namapengguna</code>) atau tautan URL lengkap.
                             </p>
                             <div className="space-y-3 md:space-y-4 max-w-2xl mx-auto">
@@ -1933,9 +1936,11 @@ const Settings: React.FC<SettingsProps> = ({ profile, setProfile, transactions, 
                                     </div>
                                 </div>
                             </div>
+                            </section>
 
-                            <h3 className="text-sm md:text-lg font-semibold text-brand-text-light border-b border-gray-700/50 pb-2 md:pb-3 mt-6 md:mt-8">Branding & Kustomisasi</h3>
-                            <div className="space-y-4 md:space-y-5 max-w-2xl mx-auto rounded-2xl border border-brand-accent/20 bg-brand-accent/5 p-3 sm:p-4 md:p-5">
+                            <section className="rounded-2xl border border-brand-accent/25 bg-white p-4 shadow-sm sm:p-5 md:p-6">
+                            <h3 className="mb-4 border-b border-brand-accent/25 pb-3 text-sm font-semibold text-brand-text-primary md:text-lg">Branding & Kustomisasi</h3>
+                            <div className="space-y-4 md:space-y-5 max-w-2xl mx-auto rounded-xl border border-brand-accent/25 p-3 sm:p-4 md:p-5" style={{ backgroundColor: 'color-mix(in srgb, var(--color-accent) 8%, white)' }}>
                                 <p className="text-[11px] md:text-xs text-brand-text-secondary">Unggah atau hapus logo dan tanda tangan, lalu simpan perubahan satu kali untuk menerapkannya.</p>
                                 <div>
                                     <label htmlFor="logoUpload" className="text-xs md:text-sm font-medium text-brand-text-secondary">Logo Perusahaan (u/ Invoice)</label>
@@ -2087,72 +2092,8 @@ const Settings: React.FC<SettingsProps> = ({ profile, setProfile, transactions, 
                                         isSaving={isSaving}
                                     />
                                 </div>
-                                <h4 className="text-sm font-semibold text-brand-text-light mt-6 mb-2">Template WhatsApp (Calon Pengantin/Leads)</h4>
-                                <p className="text-xs text-brand-text-secondary mb-3">Digunakan saat membagikan link Package atau form booking ke Calon Pengantin dari halaman Calon Pengantin.</p>
-                                <TemplateEditor
-                                    id="packageShareTemplate"
-                                    label="Template Bagikan Package"
-                                    value={profile.packageShareTemplate || ''}
-                                    rows={5}
-                                    defaultValue={DEFAULT_PACKAGE_SHARE_TEMPLATE}
-                                    helper={<>Placeholder: {`{leadName}`}, {`{companyName}`}, {`{packageLink}`}</>}
-                                    onSave={value => handleTemplateSave('packageShareTemplate', value)}
-                                    isSaving={isSaving}
-                                />
-                                <TemplateEditor
-                                    id="bookingFormTemplate"
-                                    label="Template Kirim Form Booking"
-                                    value={profile.bookingFormTemplate || ''}
-                                    rows={5}
-                                    defaultValue={DEFAULT_BOOKING_FORM_TEMPLATE}
-                                    helper={<>Placeholder: {`{leadName}`}, {`{companyName}`}, {`{bookingFormLink}`}</>}
-                                    onSave={value => handleTemplateSave('bookingFormTemplate', value)}
-                                    isSaving={isSaving}
-                                />
-                                <h4 className="text-sm font-semibold text-brand-text-light mt-8 mb-2 border-t border-brand-border pt-6">Template WhatsApp (Keuangan & Dokumen)</h4>
-                                <p className="text-xs text-brand-text-secondary mb-3">Digunakan saat mengirim Invoice, Tanda Terima, Slip Pembayaran, atau share Portal Pengantin via WA.</p>
-
-                                <TemplateEditor
-                                    id="invoiceShareTemplate"
-                                    label="Template Kirim Invoice"
-                                    value={profile.invoiceShareTemplate || ''}
-                                    rows={5}
-                                    defaultValue={DEFAULT_INVOICE_SHARE_TEMPLATE}
-                                    helper={<>Placeholder: {`{clientName}`}, {`{companyName}`}, {`{projectName}`}, {`{totalCost}`}, {`{amountPaid}`}, {`{sisaTagihan}`}, {`{invoiceLink}`}</>}
-                                    onSave={value => handleTemplateSave('invoiceShareTemplate', value)}
-                                    isSaving={isSaving}
-                                />
-                                <TemplateEditor
-                                    id="receiptShareTemplate"
-                                    label="Template Kirim Tanda Terima Pelanggan"
-                                    value={profile.receiptShareTemplate || ''}
-                                    rows={5}
-                                    defaultValue={DEFAULT_RECEIPT_SHARE_TEMPLATE}
-                                    helper={<>Placeholder: {`{clientName}`}, {`{companyName}`}, {`{projectName}`}, {`{txDate}`}, {`{txAmount}`}, {`{txMethod}`}, {`{txDesc}`}, {`{receiptLink}`}</>}
-                                    onSave={value => handleTemplateSave('receiptShareTemplate', value)}
-                                    isSaving={isSaving}
-                                />
-                                <TemplateEditor
-                                    id="expenseShareTemplate"
-                                    label="Template Kirim Slip Pengeluaran"
-                                    value={profile.expenseShareTemplate || ''}
-                                    rows={5}
-                                    defaultValue={DEFAULT_EXPENSE_SHARE_TEMPLATE}
-                                    helper={<>Placeholder: {`{targetName}`}, {`{companyName}`}, {`{txDate}`}, {`{txAmount}`}, {`{txMethod}`}, {`{txDesc}`}, {`{receiptLink}`}</>}
-                                    onSave={value => handleTemplateSave('expenseShareTemplate', value)}
-                                    isSaving={isSaving}
-                                />
-                                <TemplateEditor
-                                    id="portalShareTemplate"
-                                    label="Template Share Portal Pengantin"
-                                    value={profile.portalShareTemplate || ''}
-                                    rows={5}
-                                    defaultValue={DEFAULT_PORTAL_SHARE_TEMPLATE}
-                                    helper={<>Placeholder: {`{clientName}`}, {`{companyName}`}, {`{portalLink}`}</>}
-                                    onSave={value => handleTemplateSave('portalShareTemplate', value)}
-                                    isSaving={isSaving}
-                                />
                             </div>
+                            </section>
 
                             <h3 className="text-sm md:text-lg font-semibold text-brand-text-light border-b border-gray-700/50 pb-2 md:pb-3 mt-6 md:mt-8">Notifikasi</h3>
                             <div className="space-y-3 md:space-y-4 max-w-2xl mx-auto">
@@ -2349,7 +2290,7 @@ const Settings: React.FC<SettingsProps> = ({ profile, setProfile, transactions, 
     };
 
     return (
-        <div className="space-y-4 md:space-y-6">
+        <div className="settings-page space-y-4 md:space-y-6">
 
             {/* Mobile Tab Navigation - Horizontal Scroll */}
             <div className="lg:hidden">
@@ -2375,7 +2316,7 @@ const Settings: React.FC<SettingsProps> = ({ profile, setProfile, transactions, 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
                 {/* Desktop Sidebar Navigation */}
                 <aside className="hidden lg:block lg:col-span-1">
-                    <nav className="space-y-1 sticky top-24">
+                    <nav className="sticky top-24 space-y-1 rounded-2xl border border-brand-border bg-white p-3 shadow-sm">
                         {tabs
                             .filter(tab => !(tab.adminOnly && currentUser?.role !== 'Admin'))
                             .map(tab => (
@@ -2384,7 +2325,7 @@ const Settings: React.FC<SettingsProps> = ({ profile, setProfile, transactions, 
                                     onClick={() => setActiveTab(tab.id)}
                                     className={`w-full flex items-center px-4 py-3 text-sm font-semibold rounded-lg transition-all duration-200 text-left ${activeTab === tab.id
                                         ? 'bg-brand-accent text-white shadow-lg'
-                                        : 'text-brand-text-secondary hover:bg-brand-input hover:text-brand-text-light'
+                                        : 'bg-white text-brand-text-secondary hover:bg-brand-accent-light hover:text-brand-text-primary'
                                         }`}
                                 >
                                     <tab.icon className="w-5 h-5 mr-3" />
@@ -2393,7 +2334,7 @@ const Settings: React.FC<SettingsProps> = ({ profile, setProfile, transactions, 
                             ))}
                     </nav>
                 </aside>
-                <main className="lg:col-span-3 bg-brand-surface p-3 md:p-4 lg:p-6 rounded-xl md:rounded-2xl shadow-lg min-h-[60vh]">
+                <main className="lg:col-span-3 min-h-[60vh] rounded-xl border border-brand-border bg-white p-3 shadow-sm md:rounded-2xl md:p-5 lg:p-6">
                     {renderTabContent()}
                 </main>
             </div>

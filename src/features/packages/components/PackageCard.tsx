@@ -29,6 +29,10 @@ interface PackageCardProps {
     canMoveUp?: boolean;
     canMoveDown?: boolean;
     orderIndex?: number;
+    draggable?: boolean;
+    onDragStart?: (event: React.DragEvent<HTMLDivElement>) => void;
+    onDragOver?: (event: React.DragEvent<HTMLDivElement>) => void;
+    onDrop?: (event: React.DragEvent<HTMLDivElement>) => void;
 }
 
 const formatCurrency = (amount: number) => {
@@ -50,6 +54,10 @@ export const PackageCard: React.FC<PackageCardProps> = ({
     canMoveUp,
     canMoveDown,
     orderIndex,
+    draggable,
+    onDragStart,
+    onDragOver,
+    onDrop,
 }) => {
     const uiTextOverrides = useUiTextOverrides();
     const text = (key: string, fallback: string) => customizeUiText(`packages.card.${key}`, fallback, uiTextOverrides);
@@ -77,7 +85,7 @@ export const PackageCard: React.FC<PackageCardProps> = ({
         : pkg.physicalItems || [];
 
     return (
-        <div className="h-full bg-white rounded-xl sm:rounded-2xl border border-[#EAEFF4] shadow-[0_4px_16px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.07)] hover:border-brand-accent/30 transition-all duration-300 flex flex-col overflow-hidden group">
+        <div draggable={draggable} onDragStart={onDragStart} onDragOver={onDragOver} onDrop={onDrop} className="h-full bg-white rounded-xl sm:rounded-2xl border border-[#EAEFF4] shadow-[0_4px_16px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.07)] hover:border-brand-accent/30 transition-all duration-300 flex flex-col overflow-hidden group cursor-grab active:cursor-grabbing">
             {/* ── Cover Image Header ── */}
             <div className="relative h-28 sm:h-40 lg:h-52 w-full overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200">
                 {pkg.coverImage ? (

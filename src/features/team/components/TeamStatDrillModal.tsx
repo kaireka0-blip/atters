@@ -13,7 +13,7 @@ import { customizeUiText, useUiTextOverrides } from '../../../utils/uiTextCustom
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type StatGroup = 'team' | 'vendor';
+export type StatGroup = 'team' | 'employee' | 'vendor';
 export type StatKey =
   | 'total'
   | 'unpaid'
@@ -30,10 +30,11 @@ export interface ActiveStatModal {
 interface TeamStatDrillModalProps {
   activeStatModal: ActiveStatModal | null;
   onClose: () => void;
-  memberGroups: { team: TeamMember[]; vendor: TeamMember[] };
+  memberGroups: { team: TeamMember[]; employee: TeamMember[]; vendor: TeamMember[] };
   teamProjectPaymentsInDateRange: TeamProjectPayment[];
   projects: Project[];
   uniqueTeamMembers: TeamMember[];
+  uniqueEmployeeMembers: TeamMember[];
   uniqueVendorMembers: TeamMember[];
   projectsInDateRange: Project[];
 }
@@ -295,6 +296,12 @@ const MODAL_TITLES: Record<string, string> = {
   'team-events': 'Rincian Acara Pernikahan (Tim)',
   'team-payments': 'Rincian Pembayaran (Tim)',
   'team-performance': 'Rincian Kinerja (Tim)',
+  'employee-total': 'Daftar Karyawan',
+  'employee-unpaid': 'Rincian Gaji Karyawan Belum Dibayar',
+  'employee-topRated': 'Peringkat Karyawan',
+  'employee-events': 'Rincian Acara Karyawan',
+  'employee-payments': 'Rincian Gaji Karyawan',
+  'employee-performance': 'Kinerja Karyawan',
   'vendor-total': 'Daftar Semua Vendor',
   'vendor-unpaid': 'Rincian Pembayaran Vendor Belum Dibayar',
   'vendor-topRated': 'Peringkat Vendor',
@@ -312,6 +319,7 @@ const TeamStatDrillModal: React.FC<TeamStatDrillModalProps> = ({
   teamProjectPaymentsInDateRange,
   projects,
   uniqueTeamMembers,
+  uniqueEmployeeMembers,
   uniqueVendorMembers,
   projectsInDateRange,
 }) => {
@@ -319,8 +327,8 @@ const TeamStatDrillModal: React.FC<TeamStatDrillModalProps> = ({
   const renderContent = () => {
     if (!activeStatModal) return null;
     const { group, stat } = activeStatModal;
-    const groupMembers = group === 'team' ? memberGroups.team : memberGroups.vendor;
-    const displayMembers = group === 'team' ? uniqueTeamMembers : uniqueVendorMembers;
+    const groupMembers = memberGroups[group];
+    const displayMembers = group === 'team' ? uniqueTeamMembers : group === 'employee' ? uniqueEmployeeMembers : uniqueVendorMembers;
 
     switch (stat) {
       case 'total':

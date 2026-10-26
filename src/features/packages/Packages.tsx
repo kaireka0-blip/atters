@@ -34,7 +34,9 @@ import { SharePackageModal } from './components/SharePackageModal';
 import { WorkflowModal } from './components/WorkflowModal';
 import { PackageTermsModal } from './components/PackageTermsModal';
 import { RegionPricelistModal } from './components/RegionPricelistModal';
+import PackageRegionTagsModal from './components/PackageRegionTagsModal';
 import { buildPublicShareUrl, getPackageShareIdentifier } from '../../utils/publicRouting';
+import { buildPackageRegionOptions, normalizePackageRegionTag } from '../../utils/packageRegions';
 
 import {
     Package as PackageIcon,
@@ -102,7 +104,7 @@ const emptyPackageForm = {
 };
 
 const titleCase = (s: string) =>
-    s ? s.replace(/\b\w/g, c => c.toUpperCase()) : '';
+    s ? s.replace(/[-_]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : '';
 
 interface AddOnEditorModalProps {
     isOpen: boolean;
@@ -241,6 +243,11 @@ interface CatalogItemCardProps {
     canMoveUp?: boolean;
     canMoveDown?: boolean;
     orderIndex?: number;
+    draggable?: boolean;
+    onDragStart?: (event: React.DragEvent<HTMLElement>) => void;
+    onDragOver?: (event: React.DragEvent<HTMLElement>) => void;
+    onDrop?: (event: React.DragEvent<HTMLElement>) => void;
+    onDragEnd?: () => void;
 }
 
 const CatalogItemCard: React.FC<CatalogItemCardProps> = ({
@@ -252,9 +259,14 @@ const CatalogItemCard: React.FC<CatalogItemCardProps> = ({
     onMoveDown,
     canMoveUp,
     canMoveDown,
-    orderIndex
+    orderIndex,
+    draggable,
+    onDragStart,
+    onDragOver,
+    onDrop,
+    onDragEnd,
 }) => (
-    <article className="h-full min-h-[150px] bg-white rounded-xl sm:rounded-2xl border border-[#EAEFF4] shadow-[0_4px_16px_rgba(0,0,0,0.03)] hover:border-brand-accent/30 p-3.5 sm:p-4 flex flex-col justify-between gap-3 transition-all">
+    <article draggable={draggable} onDragStart={onDragStart} onDragOver={onDragOver} onDrop={onDrop} onDragEnd={onDragEnd} className="h-full min-h-[150px] bg-white rounded-xl sm:rounded-2xl border border-[#EAEFF4] shadow-[0_4px_16px_rgba(0,0,0,0.03)] hover:border-brand-accent/30 p-3.5 sm:p-4 flex flex-col justify-between gap-3 transition-all cursor-grab active:cursor-grabbing">
         <div>
             <div className="flex items-start justify-between gap-2 mb-2">
                 <div className="flex items-center gap-1.5">
@@ -320,7 +332,7 @@ export const Packages: React.FC<PackagesProps> = ({
     // ── Main UI States ──
     const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
     const [searchTerm, setSearchTerm] = useState('');
-    const [regionFilter, setRegionFilter] = useState<string>(REGIONS[0]?.value || '');
+    const [regionFilter, setRegionFilter] = useState<string>(profile.publicPageConfig?.packageRegions?.[0] || REGIONS[0]?.value || '');
     const [categoryFilter, setCategoryFilter] = useState<string>('');
     const [packageOrder, setPackageOrder] = useState<string[]>(() => profile.publicPageConfig?.packageOrder || []);
     const [addOnOrder, setAddOnOrder] = useState<string[]>(() => profile.publicPageConfig?.addOnOrder || []);
@@ -403,6 +415,8 @@ export const Packages: React.FC<PackagesProps> = ({
     const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
     const [isPricelistModalOpen, setIsPricelistModalOpen] = useState(false);
     const [isWorkflowModalOpen, setIsWorkflowModalOpen] = useState(false);
+    const [isRegionTagsModalOpen, setIsRegionTagsModalOpen] = useState(false);
+    const [isSavingRegionTags, setIsSavingRegionTags] = useState(false);
 
     // Initial action handler (e.g. redirected from dashboard with "add" action)
     useEffect(() => {
@@ -426,13 +440,134 @@ export const Packages: React.FC<PackagesProps> = ({
     }, [packages, addOns]);
 
     const unionRegions = useMemo(() => {
-        const baseValues = REGIONS.map(r => r.value.toLowerCase());
-        const extra = existingRegions.filter(er => !baseValues.includes(er.toLowerCase()));
-        return [
-            ...REGIONS.map(r => ({ value: r.value, label: r.label })),
-            ...extra.map(er => ({ value: er, label: titleCase(er) })),
-        ];
-    }, [existingRegions]);
+        return buildPackageRegionOptions(existingRegions, profile.publicPageConfig?.packageRegions);
+    }, [existingRegions, profile.publicPageConfig?.packageRegions]);
+
+    useEffect(() => {
+        if (regionFilter && unionRegions.some(region => region.value.toLowerCase() === regionFilter.toLowerCase())) return;
+        setRegionFilter(unionRegions[0]?.value || '');
+    }, [regionFilter, unionRegions]);
+
+    const regionTagRows = useMemo(() => unionRegions.map(region => ({
+        ...region,
+        packageCount: packages.filter(item => item.region?.trim().toLowerCase() === region.value.toLowerCase()).length,
+        addOnCount: addOns.filter(item => item.region?.trim().toLowerCase() === region.value.toLowerCase()).length,
+    })), [unionRegions, packages, addOns]);
+
+    const persistPackageRegionTags = async (regions: string[]) => {
+        const updatedProfile = await upsertProfile({
+            id: profile.id,
+            publicPageConfig: {
+                ...profile.publicPageConfig,
+                packageRegions: regions,
+            },
+        });
+        setProfile(updatedProfile);
+    };
+
+    const updateRegionAssignments = async (
+        sourceRegion: string | null,
+        targetRegion: string | null,
+        applyToAll = false,
+    ) => {
+        const normalizedSource = sourceRegion?.toLowerCase();
+        const normalizedTarget = targetRegion?.toLowerCase();
+        const shouldUpdate = (region?: string) => applyToAll
+            ? region?.trim().toLowerCase() !== normalizedTarget
+            : region?.trim().toLowerCase() === normalizedSource;
+        const packageTargets = packages.filter(item => shouldUpdate(item.region));
+        const addOnTargets = addOns.filter(item => shouldUpdate(item.region));
+        const targetValue = targetRegion as unknown as Region;
+        const [packageResults, addOnResults] = await Promise.all([
+            Promise.allSettled(packageTargets.map(item => updatePackage(item.id, { region: targetValue }))),
+            Promise.allSettled(addOnTargets.map(item => updateAddOn(item.id, { region: targetValue }))),
+        ]);
+
+        const updatedPackageIds = new Set(packageTargets.filter((_, index) => packageResults[index].status === 'fulfilled').map(item => item.id));
+        const updatedAddOnIds = new Set(addOnTargets.filter((_, index) => addOnResults[index].status === 'fulfilled').map(item => item.id));
+        setPackages(previous => previous.map(item => updatedPackageIds.has(item.id) ? { ...item, region: targetRegion || undefined } : item));
+        setAddOns(previous => previous.map(item => updatedAddOnIds.has(item.id) ? { ...item, region: targetRegion || undefined } : item));
+
+        return {
+            updatedCount: updatedPackageIds.size + updatedAddOnIds.size,
+            failedCount: packageResults.filter(result => result.status === 'rejected').length
+                + addOnResults.filter(result => result.status === 'rejected').length,
+        };
+    };
+
+    const handleCreateRegionTag = async (value: string) => {
+        if (unionRegions.some(region => region.value.toLowerCase() === value.toLowerCase())) {
+            throw new Error('Tag wilayah tersebut sudah ada.');
+        }
+        setIsSavingRegionTags(true);
+        try {
+            const current = profile.publicPageConfig?.packageRegions ?? unionRegions.map(region => region.value);
+            await persistPackageRegionTags([...current, value]);
+            showNotification(`Tag “${titleCase(value)}” berhasil ditambahkan.`);
+        } catch (error) {
+            throw new Error(`Gagal menyimpan tag wilayah. ${error instanceof Error ? error.message : ''}`);
+        } finally {
+            setIsSavingRegionTags(false);
+        }
+    };
+
+    const handleRenameRegionTag = async (currentValue: string, nextValue: string) => {
+        if (unionRegions.some(region => region.value.toLowerCase() === nextValue.toLowerCase() && region.value.toLowerCase() !== currentValue.toLowerCase())) {
+            throw new Error('Nama tag sudah dipakai. Pilih nama lain.');
+        }
+        if (currentValue.toLowerCase() === nextValue.toLowerCase()) return;
+        setIsSavingRegionTags(true);
+        try {
+            const current = profile.publicPageConfig?.packageRegions ?? unionRegions.map(region => region.value);
+            const next = current.map(value => value.toLowerCase() === currentValue.toLowerCase() ? nextValue : value);
+            if (!next.some(value => value.toLowerCase() === nextValue.toLowerCase())) next.push(nextValue);
+            await persistPackageRegionTags(next);
+            const result = await updateRegionAssignments(currentValue, nextValue);
+            if (result.failedCount) {
+                throw new Error(`${result.updatedCount} item berhasil diperbarui, ${result.failedCount} item gagal. Tag lama tetap terlihat untuk item yang belum berhasil.`);
+            }
+            setRegionFilter(value => value.toLowerCase() === currentValue.toLowerCase() ? nextValue : value);
+            showNotification(`Tag “${titleCase(currentValue)}” diperbarui menjadi “${titleCase(nextValue)}” pada semua paket dan Add-On terkait.`);
+        } catch (error) {
+            throw new Error(`Gagal memperbarui tag wilayah. ${error instanceof Error ? error.message : ''}`);
+        } finally {
+            setIsSavingRegionTags(false);
+        }
+    };
+
+    const handleDeleteRegionTag = async (value: string) => {
+        setIsSavingRegionTags(true);
+        try {
+            const current = profile.publicPageConfig?.packageRegions ?? unionRegions.map(region => region.value);
+            await persistPackageRegionTags(current.filter(region => region.toLowerCase() !== value.toLowerCase()));
+            const result = await updateRegionAssignments(value, null);
+            if (result.failedCount) {
+                throw new Error(`${result.updatedCount} item sudah dilepas dari tag, tetapi ${result.failedCount} item gagal diperbarui. Tag tetap tampil selama masih dipakai item tersebut.`);
+            }
+            if (regionFilter.toLowerCase() === value.toLowerCase()) {
+                setRegionFilter(unionRegions.find(region => region.value.toLowerCase() !== value.toLowerCase())?.value || '');
+            }
+            showNotification(`Tag “${titleCase(value)}” dihapus. Paket dan Add-On tetap tersimpan tanpa tag wilayah.`);
+        } catch (error) {
+            throw new Error(`Gagal menghapus tag wilayah. ${error instanceof Error ? error.message : ''}`);
+        } finally {
+            setIsSavingRegionTags(false);
+        }
+    };
+
+    const handleApplyRegionToAll = async (value: string) => {
+        setIsSavingRegionTags(true);
+        try {
+            const result = await updateRegionAssignments(null, value, true);
+            if (result.failedCount) {
+                throw new Error(`${result.updatedCount} item berhasil diperbarui, ${result.failedCount} item gagal.`);
+            }
+            setRegionFilter(value);
+            showNotification(`Tag “${titleCase(value)}” diterapkan ke semua paket dan Add-On.`);
+        } finally {
+            setIsSavingRegionTags(false);
+        }
+    };
 
     // Categories list
     const availableCategories = useMemo(() => {
@@ -1017,6 +1152,19 @@ export const Packages: React.FC<PackagesProps> = ({
         persistCatalogOrder();
     };
 
+    const handleCatalogDrop = (kind: 'package' | 'addOn', sourceId: string, targetId: string, groupItems: (Package | AddOn)[]) => {
+        if (!sourceId || sourceId === targetId) return;
+        const ids = groupItems.map(item => item.id);
+        const from = ids.indexOf(sourceId);
+        const to = ids.indexOf(targetId);
+        if (from < 0 || to < 0) return;
+        const move = kind === 'package' ? handleMovePackage : handleMoveAddOn;
+        const direction = from < to ? 'down' : 'up';
+        for (let i = from; direction === 'down' ? i < to : i > to; direction === 'down' ? i++ : i--) {
+            move(sourceId, direction, groupItems as never);
+        }
+    };
+
     // ── Package Terms & Conditions Handler (for Public Catalog) ──
     const handleSavePackageTerms = async (updatedTerms: PackageTermItem[]) => {
         try {
@@ -1258,7 +1406,12 @@ export const Packages: React.FC<PackagesProps> = ({
 
                 <div className="border-t border-[#EAEFF4] pt-3">
                     <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                        <p className="text-[10px] sm:text-xs font-semibold text-[#5A6A85]">PACKAGE CUTOM </p>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-[10px] sm:text-xs font-semibold text-[#5A6A85]">Tag Wilayah</p>
+                            <button type="button" onClick={() => setIsRegionTagsModalOpen(true)} className="inline-flex min-h-8 items-center gap-1 rounded-lg border border-brand-accent/30 bg-brand-accent/5 px-2.5 text-[10px] font-semibold text-brand-accent hover:bg-brand-accent/10">
+                                <Pencil className="h-3 w-3" />Kelola Tag
+                            </button>
+                        </div>
                         {regionFilter && <span className="text-[10px] sm:text-xs text-[#5A6A85]">{catalogEntries.length} item</span>}
                     </div>
                     <div className="flex flex-wrap items-center gap-1.5">
@@ -1316,6 +1469,10 @@ export const Packages: React.FC<PackagesProps> = ({
                                                     canMoveUp={idx > 0}
                                                     canMoveDown={idx < group.items.length - 1}
                                                     orderIndex={idx}
+                                                    draggable
+                                                    onDragStart={(event) => { event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', pkg.id); }}
+                                                    onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = 'move'; }}
+                                                    onDrop={(event) => { event.preventDefault(); handleCatalogDrop('package', event.dataTransfer.getData('text/plain'), pkg.id, group.items); }}
                                                 />
                                             ))}
                                         </div>
@@ -1357,6 +1514,10 @@ export const Packages: React.FC<PackagesProps> = ({
                                                     canMoveUp={idx > 0}
                                                     canMoveDown={idx < group.items.length - 1}
                                                     orderIndex={idx}
+                                                    draggable
+                                                    onDragStart={(event) => { event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', addOn.id); }}
+                                                    onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = 'move'; }}
+                                                    onDrop={(event) => { event.preventDefault(); handleCatalogDrop('addOn', event.dataTransfer.getData('text/plain'), addOn.id, group.items); }}
                                                 />
                                             ))}
                                         </div>
@@ -1487,6 +1648,17 @@ export const Packages: React.FC<PackagesProps> = ({
                 onSave={handleSaveAddOn}
             />
 
+            <PackageRegionTagsModal
+                isOpen={isRegionTagsModalOpen}
+                regions={regionTagRows}
+                isSaving={isSavingRegionTags}
+                onClose={() => setIsRegionTagsModalOpen(false)}
+                onCreate={handleCreateRegionTag}
+                onRename={handleRenameRegionTag}
+                onDelete={handleDeleteRegionTag}
+                onApplyToAll={handleApplyRegionToAll}
+            />
+
             {/* ── Package Edit/Add Modal ── */}
             {packageEditMode && (
                 <PackageModal
@@ -1501,7 +1673,6 @@ export const Packages: React.FC<PackagesProps> = ({
                     editMode={packageEditMode}
                     packageCategories={availableCategories}
                     unionRegions={unionRegions}
-                    existingRegions={existingRegions}
                     isSubmitting={isSavingPackage}
                     onSubmit={handleSubmitPackage}
                     onCoverImageUpload={handleCoverImageUpload}

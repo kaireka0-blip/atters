@@ -685,7 +685,7 @@ const ClientReports: React.FC<ClientReportsProps> = ({
             id: string;
             name: string;
             role: string;
-            category: 'Tim' | 'Vendor';
+            category: 'Tim' | 'Karyawan' | 'Vendor';
             jobCount: number;
             totalFee: number;
             paidFee: number;
@@ -1549,7 +1549,7 @@ const ClientReports: React.FC<ClientReportsProps> = ({
                 subtitle={dateFrom || dateTo ? `${dateFrom || '...'} s/d ${dateTo || '...'}` : 'Semua periode waktu'}
                 badge={monthFilter ? formatMonthKeyLabel(monthFilter) : dateFrom || dateTo ? 'Aktif' : 'Semua'}
             >
-                <div className="bg-brand-surface rounded-2xl border border-brand-border p-3 lg:p-4 flex flex-col gap-3 lg:flex-row lg:flex-nowrap lg:items-center lg:gap-4">
+                <div className="client-report-date-toolbar bg-brand-surface rounded-2xl border border-brand-border p-3 lg:p-3 flex flex-col gap-3 lg:flex-row lg:flex-nowrap lg:items-center lg:gap-3">
                     <div className="flex flex-wrap items-center justify-between gap-3 lg:flex-nowrap lg:justify-start lg:shrink-0">
                         <div className="flex items-center gap-2 text-sm font-medium text-brand-text-secondary shrink-0">
                             <CalendarIcon className="w-4 h-4 text-brand-accent" />
@@ -1559,25 +1559,25 @@ const ClientReports: React.FC<ClientReportsProps> = ({
                         <div className="flex items-center gap-1.5 flex-wrap lg:flex-nowrap">
                             <button
                                 onClick={() => handleSetDatePreset('all')}
-                                className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors ${activePreset === 'all' && !dateFrom && !dateTo ? 'bg-brand-accent text-white' : 'bg-brand-bg text-brand-text-secondary hover:text-brand-text-primary border border-brand-border/60'}`}
+                                className={`client-report-period-button px-2 py-1 text-[11px] font-semibold rounded-lg transition-colors ${activePreset === 'all' && !dateFrom && !dateTo ? 'bg-brand-accent text-white' : 'bg-brand-bg text-brand-text-secondary hover:text-brand-text-primary border border-brand-border/60'}`}
                             >
                                 Semua Waktu
                             </button>
                             <button
                                 onClick={() => handleSetDatePreset('this-month')}
-                                className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors ${activePreset === 'this-month' ? 'bg-brand-accent text-white' : 'bg-brand-bg text-brand-text-secondary hover:text-brand-text-primary border border-brand-border/60'}`}
+                                className={`client-report-period-button px-2 py-1 text-[11px] font-semibold rounded-lg transition-colors ${activePreset === 'this-month' ? 'bg-brand-accent text-white' : 'bg-brand-bg text-brand-text-secondary hover:text-brand-text-primary border border-brand-border/60'}`}
                             >
                                 Bulan Ini
                             </button>
                             <button
                                 onClick={() => handleSetDatePreset('this-quarter')}
-                                className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors ${activePreset === 'this-quarter' ? 'bg-brand-accent text-white' : 'bg-brand-bg text-brand-text-secondary hover:text-brand-text-primary border border-brand-border/60'}`}
+                                className={`client-report-period-button px-2 py-1 text-[11px] font-semibold rounded-lg transition-colors ${activePreset === 'this-quarter' ? 'bg-brand-accent text-white' : 'bg-brand-bg text-brand-text-secondary hover:text-brand-text-primary border border-brand-border/60'}`}
                             >
                                 Kuartal Ini
                             </button>
                             <button
                                 onClick={() => handleSetDatePreset('this-year')}
-                                className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors ${activePreset === 'this-year' ? 'bg-brand-accent text-white' : 'bg-brand-bg text-brand-text-secondary hover:text-brand-text-primary border border-brand-border/60'}`}
+                                className={`client-report-period-button px-2 py-1 text-[11px] font-semibold rounded-lg transition-colors ${activePreset === 'this-year' ? 'bg-brand-accent text-white' : 'bg-brand-bg text-brand-text-secondary hover:text-brand-text-primary border border-brand-border/60'}`}
                             >
                                 Tahun Ini
                             </button>
@@ -1590,24 +1590,24 @@ const ClientReports: React.FC<ClientReportsProps> = ({
                                 type="month"
                                 value={monthFilter}
                                 onChange={e => handleMonthChange(e.target.value)}
-                                className="input-field !rounded-xl !border !bg-brand-bg p-2 text-xs flex-1 sm:flex-none lg:w-[145px] lg:flex-none"
+                                className="client-report-date-input input-field !rounded-lg !border !bg-brand-bg px-2 py-1.5 text-[11px] flex-1 sm:flex-none lg:w-[125px] lg:flex-none"
                                 title="Filter per bulan"
                             />
-                            <input type="date" value={dateFrom} onChange={e => { setActivePreset('all'); setMonthFilter(''); handleDateChange(e.target.value, dateTo); }} className="input-field !rounded-xl !border !bg-brand-bg p-2 text-xs flex-1 sm:flex-none lg:w-[145px] lg:flex-none" />
+                            <input type="date" value={dateFrom} onChange={e => { setActivePreset('all'); setMonthFilter(''); handleDateChange(e.target.value, dateTo); }} className="client-report-date-input input-field !rounded-lg !border !bg-brand-bg px-2 py-1.5 text-[11px] flex-1 sm:flex-none lg:w-[125px] lg:flex-none" />
                             <span className="text-brand-text-secondary text-sm font-medium">–</span>
-                            <input type="date" value={dateTo} onChange={e => { setActivePreset('all'); setMonthFilter(''); handleDateChange(dateFrom, e.target.value); }} className="input-field !rounded-xl !border !bg-brand-bg p-2 text-xs flex-1 sm:flex-none lg:w-[145px] lg:flex-none" />
+                            <input type="date" value={dateTo} onChange={e => { setActivePreset('all'); setMonthFilter(''); handleDateChange(dateFrom, e.target.value); }} className="client-report-date-input input-field !rounded-lg !border !bg-brand-bg px-2 py-1.5 text-[11px] flex-1 sm:flex-none lg:w-[125px] lg:flex-none" />
                         </div>
-                        <div className="flex items-center gap-2 w-full sm:w-auto justify-end lg:w-auto lg:shrink-0">
+                        <div className="client-report-export-actions flex items-center gap-1.5 w-full sm:w-auto justify-end lg:w-auto lg:shrink-0">
                             {(dateFrom || dateTo) && (
-                                <button onClick={() => { setActivePreset('all'); setMonthFilter(''); handleDateChange('', ''); }} className="button-secondary text-xs px-3 py-1.5 shrink-0">
+                                <button onClick={() => { setActivePreset('all'); setMonthFilter(''); handleDateChange('', ''); }} className="button-secondary text-[11px] px-2 py-1 shrink-0">
                                     Reset Filter
                                 </button>
                             )}
-                            <button onClick={handleExportToCSV} className="button-secondary text-xs px-3 py-1.5 shrink-0 inline-flex items-center gap-1.5">
-                                <DownloadIcon className="w-3.5 h-3.5" /> CSV
+                            <button onClick={handleExportToCSV} className="button-secondary text-[11px] px-2 py-1 shrink-0 inline-flex items-center gap-1">
+                                <DownloadIcon className="w-3 h-3" /> CSV
                             </button>
-                            <button onClick={handleDownloadPdf} disabled={isExportingPdf} className="button-primary text-xs px-3 py-1.5 shrink-0 inline-flex items-center gap-1.5 disabled:opacity-60">
-                                <DownloadIcon className="w-3.5 h-3.5" /> {isExportingPdf ? 'Menyiapkan...' : 'Unduh PDF'}
+                            <button onClick={handleDownloadPdf} disabled={isExportingPdf} className="button-primary text-[11px] px-2 py-1 shrink-0 inline-flex items-center gap-1 disabled:opacity-60">
+                                <DownloadIcon className="w-3 h-3" /> {isExportingPdf ? 'Menyiapkan...' : 'Unduh PDF'}
                             </button>
                         </div>
                     </div>

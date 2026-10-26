@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Modal from '../../../shared/ui/Modal';
 import RupiahInput from '../../../shared/form/RupiahInput';
-import { REGIONS, PhysicalItem } from '../../../types';
+import { PhysicalItem } from '../../../types';
 import { 
     Info, 
     Clock, 
@@ -30,7 +30,6 @@ interface PackageModalProps {
     editMode: string | null;
     packageCategories: string[];
     unionRegions: { value: string; label: string }[];
-    existingRegions: string[];
     isSubmitting: boolean;
     onSubmit: (e: React.FormEvent) => Promise<void>;
     onCoverImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
@@ -44,7 +43,6 @@ export const PackageModal: React.FC<PackageModalProps> = ({
     editMode,
     packageCategories,
     unionRegions,
-    existingRegions,
     isSubmitting,
     onSubmit,
     onCoverImageUpload,
@@ -327,23 +325,23 @@ export const PackageModal: React.FC<PackageModalProps> = ({
                                     className="w-full px-3.5 py-2.5 rounded-xl border border-[#EAEFF4] bg-[#F4F6F9] focus:bg-white focus:border-brand-accent text-sm text-[#2A3547] outline-none transition-all placeholder:text-[#5A6A85]/50"
                                 />
                                 <datalist id="pkg-region-suggestions">
-                                    {REGIONS.map(r => (
+                                    {unionRegions.map(r => (
                                         <option key={r.value} value={r.value}>{r.label}</option>
                                     ))}
                                 </datalist>
                                 <div className="mt-2 flex flex-wrap gap-1.5">
-                                    {[...REGIONS.map(r => r.value), ...existingRegions.filter(er => !REGIONS.some(r => r.value === er))].map(val => (
+                                    {unionRegions.map(region => (
                                         <button
                                             type="button"
-                                            key={val}
-                                            onClick={() => setFormData((p: any) => ({ ...p, region: val }))}
+                                            key={region.value}
+                                            onClick={() => setFormData((p: any) => ({ ...p, region: region.value }))}
                                             className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${
-                                                formData.region.toLowerCase() === val.toLowerCase()
+                                                formData.region.toLowerCase() === region.value.toLowerCase()
                                                     ? 'bg-brand-accent text-white border-brand-accent shadow-sm'
                                                     : 'bg-white border-[#EAEFF4] text-[#5A6A85] hover:border-brand-accent/50'
                                             }`}
                                         >
-                                            {val.replace(/\b\w/g, c => c.toUpperCase())}
+                                            {region.label}
                                         </button>
                                     ))}
                                     {formData.region && (

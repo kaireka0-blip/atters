@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { TeamProjectPayment, Project } from '../../../types';
 import { formatDate } from '../utils/teamUtils';
 
@@ -146,12 +146,52 @@ export const UnpaidTeamPaymentsSection: React.FC<UnpaidTeamPaymentsSectionProps>
 
 const FreelancerProjects: React.FC<FreelancerProjectsProps> = ({ projects, memberId }) => {
   const showFee = Boolean(memberId);
+  const [activeGroup, setActiveGroup] = useState<'month' | 'upcoming' | 'completed' | 'other'>('month');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStart = today.getTime();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth();
+  const monthLabel = today.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
 
-  const rows = [...projects]
-    .filter((project) => project.status !== 'Dibatalkan')
-    .sort((left, right) => getDateKey(right.date).localeCompare(getDateKey(left.date)));
+  const groupedProjects = useMemo(() => {
+    const groups: Record<'month' | 'upcoming' | 'completed' | 'other', Project[]> = {
+      month: [], upcoming: [], completed: [], other: [],
+    };
+    const today = new Date(todayStart);
 
-  if (rows.length === 0) {
+    [...projects]
+      .filter((project) => project.status !== 'Dibatalkan')
+      .sort((left, right) => getDateKey(right.date).localeCompare(getDateKey(left.date)))
+      .forEach((project) => {
+        const status = project.status?.trim().toLocaleLowerCase('id-ID') || '';
+        if (status.includes('selesai') && !status.includes('belum')) {
+          groups.completed.push(project);
+          return;
+        }
+        const date = project.date ? new Date(`${getDateKey(project.date)}T00:00:00`) : null;
+        if (date && !Number.isNaN(date.getTime()) && date.getFullYear() === currentYear && date.getMonth() === currentMonth) {
+          groups.month.push(project);
+        } else if (date && !Number.isNaN(date.getTime()) && date > today) {
+          groups.upcoming.push(project);
+        } else {
+          groups.other.push(project);
+        }
+      });
+    groups.month.sort((left, right) => getDateKey(left.date).localeCompare(getDateKey(right.date)));
+    groups.upcoming.sort((left, right) => getDateKey(left.date).localeCompare(getDateKey(right.date)));
+    return groups;
+  }, [projects, todayStart, currentYear, currentMonth]);
+
+  const groupOptions = [
+    { id: 'month' as const, label: 'Bulan Ini', count: groupedProjects.month.length },
+    { id: 'upcoming' as const, label: 'Akan Datang', count: groupedProjects.upcoming.length },
+    { id: 'completed' as const, label: 'Selesai', count: groupedProjects.completed.length },
+    { id: 'other' as const, label: 'Lainnya', count: groupedProjects.other.length },
+  ];
+  const rows = groupedProjects[activeGroup];
+
+  if (projects.filter((project) => project.status !== 'Dibatalkan').length === 0) {
     return (
       <p className="rounded-lg border border-dashed border-brand-border px-3 py-6 text-center text-xs text-brand-text-secondary">
         Belum ada acara untuk anggota ini.
@@ -160,7 +200,28 @@ const FreelancerProjects: React.FC<FreelancerProjectsProps> = ({ projects, membe
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-brand-border">
+    <div className="space-y-2.5">
+      <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+        {groupOptions.map((group) => {
+          const active = activeGroup === group.id;
+          return (
+            <button
+              key={group.id}
+              type="button"
+              onClick={() => setActiveGroup(group.id)}
+              className={`flex items-center justify-between gap-1 rounded-lg border px-2 py-2 text-[10px] font-semibold transition-colors sm:text-xs ${active ? 'border-brand-accent bg-brand-accent text-white' : 'border-brand-border bg-brand-bg text-brand-text-secondary hover:border-brand-accent/40'}`}
+            >
+              <span className="truncate">{group.id === 'month' ? `Bulan Ini · ${monthLabel}` : group.label}</span>
+              <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[9px] ${active ? 'bg-white/20 text-white' : 'bg-brand-surface text-brand-text-primary'}`}>{group.count}</span>
+            </button>
+          );
+        })}
+      </div>
+      {rows.length === 0 ? (
+        <p className="rounded-lg border border-dashed border-brand-border px-3 py-6 text-center text-xs text-brand-text-secondary">
+          Belum ada acara dalam kategori {activeGroup === 'month' ? `Bulan Ini (${monthLabel})` : groupOptions.find((group) => group.id === activeGroup)?.label}.
+        </p>
+      ) : <div className="overflow-hidden rounded-xl border border-brand-border">
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-xs sm:text-sm">
           <thead className="bg-brand-bg">
@@ -196,6 +257,7 @@ const FreelancerProjects: React.FC<FreelancerProjectsProps> = ({ projects, membe
           </tbody>
         </table>
       </div>
+      </div>}
     </div>
   );
 };

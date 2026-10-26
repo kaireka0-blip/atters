@@ -459,7 +459,7 @@ const TransactionsTab: React.FC<TransactionsTabProps> = ({
                     onPageChange={setCurrentPage}
                     onItemsPerPageChange={setItemsPerPage}
                     label="transaksi"
-                    pageSizeOptions={[10, 20, 50]}
+                    pageSizeOptions={[10, 20]}
                 />
 
                 {hasMore && filteredTransactions.length >= 10 && (

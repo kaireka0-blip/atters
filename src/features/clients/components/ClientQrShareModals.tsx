@@ -59,7 +59,8 @@ export const ClientQrShareModals: React.FC<ClientQrShareModalsProps> = ({
                                     const template = generatePortalWhatsAppMessage(
                                         qrModalContent.clientName || '',
                                         companyName,
-                                        qrModalContent.url
+                                        qrModalContent.url,
+                                        userProfile.portalShareTemplate,
                                     );
                                     setSharePreview({
                                         title: 'Bagikan Portal Pengantin',

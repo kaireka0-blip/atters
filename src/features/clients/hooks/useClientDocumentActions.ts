@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Client, Package, Project, Transaction, Profile, TeamMember, TeamPaymentRecord, TeamProjectPayment } from '../../../types';
+import { Client, Package, Project, Transaction, TransactionType, Profile, TeamMember, TeamPaymentRecord, TeamProjectPayment } from '../../../types';
 import {
     generateInvoiceWhatsAppMessage,
     generateReceiptWhatsAppMessage
@@ -107,7 +107,7 @@ export const useClientDocumentActions = ({
             const publicInvoiceUrl = `${window.location.origin}${basePath}#/portal/invoice/${proj.id}`;
 
             // 3. Build WhatsApp template with PDF link
-            const text = generateInvoiceWhatsAppMessage(clientForDetail.name, companyName, proj, publicInvoiceUrl);
+            const text = generateInvoiceWhatsAppMessage(clientForDetail.name, companyName, proj, publicInvoiceUrl, userProfile.invoiceShareTemplate);
 
             setSharePreview({
                 title: `Bagikan Invoice - ${proj.projectName}`,
@@ -136,7 +136,14 @@ export const useClientDocumentActions = ({
             const publicReceiptUrl = `${window.location.origin}${basePath}#/portal/receipt/${tx.id}`;
 
             const projName = tx.projectId ? projects.find(p => p.id === tx.projectId)?.projectName || '' : '';
-            const text = generateReceiptWhatsAppMessage(clientForDetail.name, companyName, tx, projName, publicReceiptUrl);
+            const text = generateReceiptWhatsAppMessage(
+                clientForDetail.name,
+                companyName,
+                tx,
+                projName,
+                publicReceiptUrl,
+                tx.type === TransactionType.EXPENSE ? userProfile.expenseShareTemplate : userProfile.receiptShareTemplate,
+            );
 
             setSharePreview({
                 title: `Bagikan Tanda Terima - ${tx.id.slice(0, 8).toUpperCase()}`,

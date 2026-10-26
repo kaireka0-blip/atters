@@ -3,7 +3,7 @@
  *
  * Owns:
  * - Date range filter state (dateFrom, dateTo)
- * - Search query state (teamSearchQuery, vendorSearchQuery, unpaidSearchQuery)
+ * - Search query state for teams, employees, vendors, and unpaid payments
  * - Derived filtered / grouped data consumed by all tabs
  */
 
@@ -46,6 +46,7 @@ export const useTeamFilters = ({
 
     // ── Search queries ───────────────────────────────────────────────────────
     const [teamSearchQuery, setTeamSearchQuery] = useState('');
+    const [employeeSearchQuery, setEmployeeSearchQuery] = useState('');
     const [vendorSearchQuery, setVendorSearchQuery] = useState('');
     const [unpaidSearchQuery, setUnpaidSearchQuery] = useState('');
 
@@ -104,10 +105,11 @@ export const useTeamFilters = ({
         );
     }, [teamProjectPayments, projectsInDateRange, dateFrom, dateTo]);
 
-    // ── Member groups (team / vendor split) ──────────────────────────────────
+    // ── Member groups (team / employee / vendor split) ───────────────────────
     const memberGroups = useMemo(
         () => ({
-            team: teamMembers.filter(m => m.category !== 'Vendor'),
+            team: teamMembers.filter(m => m.category !== 'Vendor' && m.category !== 'Karyawan'),
+            employee: teamMembers.filter(m => m.category === 'Karyawan'),
             vendor: teamMembers.filter(m => m.category === 'Vendor'),
         }),
         [teamMembers],
@@ -117,6 +119,11 @@ export const useTeamFilters = ({
     const uniqueTeamMembers = useMemo(
         () => filterUniqueMembers(memberGroups.team, teamSearchQuery),
         [memberGroups.team, teamSearchQuery],
+    );
+
+    const uniqueEmployeeMembers = useMemo(
+        () => filterUniqueMembers(memberGroups.employee, employeeSearchQuery),
+        [memberGroups.employee, employeeSearchQuery],
     );
 
     const uniqueVendorMembers = useMemo(
@@ -167,6 +174,8 @@ export const useTeamFilters = ({
         // Search queries
         teamSearchQuery,
         setTeamSearchQuery,
+        employeeSearchQuery,
+        setEmployeeSearchQuery,
         vendorSearchQuery,
         setVendorSearchQuery,
         unpaidSearchQuery,
@@ -177,6 +186,7 @@ export const useTeamFilters = ({
         teamProjectPaymentsInDateRange,
         memberGroups,
         uniqueTeamMembers,
+        uniqueEmployeeMembers,
         uniqueVendorMembers,
         allUnpaidPayments,
         totalUnpaidAll,

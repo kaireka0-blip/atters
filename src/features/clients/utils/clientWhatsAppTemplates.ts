@@ -1,26 +1,34 @@
 import { Project, Transaction, TransactionType } from '../../../types';
 import { formatCurrency } from './clientHelpers';
+import {
+    DEFAULT_EXPENSE_SHARE_TEMPLATE,
+    DEFAULT_INVOICE_SHARE_TEMPLATE,
+    DEFAULT_PORTAL_SHARE_TEMPLATE,
+    DEFAULT_RECEIPT_SHARE_TEMPLATE,
+} from '../../../constants';
+
+const chooseTemplate = (saved: string | undefined, fallback: string, legacyGreeting: string) => {
+    const trimmed = saved?.trim();
+    return !trimmed || trimmed === legacyGreeting ? fallback : saved!;
+};
+
+const renderTemplate = (template: string, values: Record<string, string>) =>
+    template.replace(/\{([a-zA-Z0-9_]+)\}/g, (token, key: string) => values[key] ?? token);
 
 export const generateInvoiceWhatsAppMessage = (
     clientName: string,
     companyName: string,
     project: Project,
-    publicInvoiceUrl: string
+    publicInvoiceUrl: string,
+    savedTemplate?: string,
 ): string => {
-    const firstName = clientName.split(' ')[0];
     const sisa = project.totalCost - project.amountPaid;
-    return (
-        `Halo *${firstName}*! 👋\n\n` +
-        `Berikut kami kirimkan *Invoice* untuk Acara Pernikahan Anda bersama *${companyName}* 💍\n\n` +
-        `📋 *Rincian Pembayaran:*\n` +
-        `• Acara: ${project.projectName}\n` +
-        `• Total Biaya: *${formatCurrency(project.totalCost)}*\n` +
-        `• Sudah Dibayar: ${formatCurrency(project.amountPaid)}\n` +
-        `• Sisa Pembayaran: *${formatCurrency(sisa)}*\n\n` +
-        `📄 *Lihat & Download Invoice PDF di sini:*\n${publicInvoiceUrl}\n\n` +
-        `_(File PDF invoice juga telah kami kirimkan terpisah)_\n\n` +
-        `Terima kasih atas kepercayaan Anda. Semoga acaranya berjalan lancar! 🙏`
-    );
+    const template = chooseTemplate(savedTemplate, DEFAULT_INVOICE_SHARE_TEMPLATE, 'Halo *{clientName}*!');
+    return renderTemplate(template, {
+        clientName, companyName, projectName: project.projectName || 'Acara Pernikahan',
+        totalCost: formatCurrency(project.totalCost), amountPaid: formatCurrency(project.amountPaid),
+        sisaTagihan: formatCurrency(sisa), invoiceLink: publicInvoiceUrl,
+    });
 };
 
 export const generateReceiptWhatsAppMessage = (
@@ -28,7 +36,8 @@ export const generateReceiptWhatsAppMessage = (
     companyName: string,
     transaction: Transaction,
     projectName: string,
-    publicReceiptUrl: string
+    publicReceiptUrl: string,
+    savedTemplate?: string,
 ): string => {
     const isExpense = transaction.type === TransactionType.EXPENSE;
     const txDate = new Date(transaction.date).toLocaleDateString('id-ID', {
@@ -43,50 +52,27 @@ export const generateReceiptWhatsAppMessage = (
             const match = transaction.description?.match(/Gaji Freelance - (.+?) \(/);
             targetName = match && match[1] ? match[1] : 'Vendor / Tim';
         }
-        return (
-            `Halo *${targetName}*! 👋\n\n` +
-            `Berikut kami kirimkan *Bukti Pengeluaran / Slip Pembayaran* dari *${companyName}* ✅\n\n` +
-            `📋 *Detail Pembayaran:*\n` +
-            `• Tanggal: ${txDate}\n` +
-            `• Jumlah: *${formatCurrency(transaction.amount)}*\n` +
-            `• Metode: ${transaction.method}\n` +
-            `• Keterangan: ${transaction.description}\n\n` +
-            `📄 *Lihat & Download Slip PDF di sini:*\n${publicReceiptUrl}\n\n` +
-            `_(File PDF slip pembayaran juga telah kami kirimkan terpisah)_\n\n` +
-            `Terima kasih! 🙏`
-        );
+        const template = chooseTemplate(savedTemplate, DEFAULT_EXPENSE_SHARE_TEMPLATE, 'Halo *{targetName}*!');
+        return renderTemplate(template, {
+            targetName, companyName, txDate, txAmount: formatCurrency(transaction.amount),
+            txMethod: transaction.method || '-', txDesc: transaction.description || '-', receiptLink: publicReceiptUrl,
+        });
     }
 
-    const firstName = clientName.split(' ')[0];
-    return (
-        `Halo *${firstName}*! 👋\n\n` +
-        `Berikut kami kirimkan *Tanda Terima Pembayaran* untuk Acara Pernikahan Anda bersama *${companyName}* ✅\n\n` +
-        `📋 *Detail Pembayaran:*\n` +
-        `• Acara: ${projectName}\n` +
-        `• Tanggal: ${txDate}\n` +
-        `• Jumlah: *${formatCurrency(transaction.amount)}*\n` +
-        `• Metode: ${transaction.method}\n` +
-        `• Keterangan: ${transaction.description}\n\n` +
-        `📄 *Lihat & Download Tanda Terima PDF di sini:*\n${publicReceiptUrl}\n\n` +
-        `_(File PDF tanda terima juga telah kami kirimkan terpisah)_\n\n` +
-        `Terima kasih, pembayaran Anda telah kami terima dengan baik. Semoga persiapannya lancar! 🙏`
-    );
+    const template = chooseTemplate(savedTemplate, DEFAULT_RECEIPT_SHARE_TEMPLATE, 'Halo *{clientName}*!');
+    return renderTemplate(template, {
+        clientName, companyName, projectName: projectName || 'Acara Pernikahan', txDate,
+        txAmount: formatCurrency(transaction.amount), txMethod: transaction.method || '-',
+        txDesc: transaction.description || '-', receiptLink: publicReceiptUrl,
+    });
 };
 
 export const generatePortalWhatsAppMessage = (
     clientName: string,
     companyName: string,
-    portalUrl: string
+    portalUrl: string,
+    savedTemplate?: string,
 ): string => {
-    const firstName = (clientName || '').split(' ')[0];
-    return (
-        `Halo ${firstName}! 👋\n\n` +
-        `Salam dari tim *${companyName}* 💍\n\n` +
-        `Kami dengan senang hati membagikan *Portal Pengantin* Anda, di mana Anda bisa memantau:\n` +
-        `✅ Progres persiapan acara pernikahan Anda\n` +
-        `💰 Detail pembayaran & invoice\n` +
-        `📋 Package & vendor yang dipilih\n\n` +
-        `🔗 *Akses Portal Anda di sini:*\n${portalUrl}\n\n` +
-        `Jika ada pertanyaan, jangan ragu menghubungi kami. Semoga membantu! 🙏`
-    );
+    const template = chooseTemplate(savedTemplate, DEFAULT_PORTAL_SHARE_TEMPLATE, 'Halo {clientName}!');
+    return renderTemplate(template, { clientName, companyName, portalLink: portalUrl });
 };

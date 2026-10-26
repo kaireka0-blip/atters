@@ -35,6 +35,9 @@ export const dedupeCurrentTeamPayments = (
 export const getStatusClass = (status: 'Paid' | 'Unpaid'): string =>
     status === 'Paid' ? 'solid-green text-white' : 'solid-orange text-white';
 
+export const getEmployeeSalaryRecordNumber = (memberId: string, month: string): string =>
+    `PAY-SAL-${memberId.slice(-6).toUpperCase()}-${month.replace('-', '')}`;
+
 export const filterUniqueMembers = (
     members: TeamMember[],
     query: string,

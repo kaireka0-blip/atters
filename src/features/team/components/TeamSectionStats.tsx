@@ -30,7 +30,7 @@ interface SectionStats {
     performanceNotesCount: number;
 }
 
-type StatGroup = 'team' | 'vendor';
+type StatGroup = 'team' | 'employee' | 'vendor';
 type StatKey = 'total' | 'unpaid' | 'topRated' | 'events' | 'payments' | 'performance';
 
 interface TeamSectionStatsProps {
@@ -49,6 +49,7 @@ const TeamSectionStats: React.FC<TeamSectionStatsProps> = ({
     onStatClick,
 }) => {
     const isVendor = group === 'vendor';
+    const isEmployee = group === 'employee';
 
     return (
         <>
@@ -61,9 +62,9 @@ const TeamSectionStats: React.FC<TeamSectionStatsProps> = ({
                 >
                     <ModernStatCard
                         icon={<UsersIcon className="w-3.5 h-3.5 sm:w-5 sm:h-5" />}
-                        title={isVendor ? 'Total Vendor' : 'Total Tim'}
+                        title={isVendor ? 'Total Vendor' : isEmployee ? 'Total Karyawan' : 'Total Tim'}
                         value={stats.totalMembers.toString()}
-                        subtitle={isVendor ? 'Vendor terdaftar' : 'Anggota aktif'}
+                        subtitle={isVendor ? 'Vendor terdaftar' : isEmployee ? 'Karyawan terdaftar' : 'Anggota aktif'}
                         iconColorVariant="primary"
                         compactOnMobile
                     />
@@ -75,7 +76,7 @@ const TeamSectionStats: React.FC<TeamSectionStatsProps> = ({
                 >
                     <ModernStatCard
                         icon={<AlertCircleIcon className="w-3.5 h-3.5 sm:w-5 sm:h-5" />}
-                        title={isVendor ? 'Pembayaran Vendor' : 'Pembayaran Tim'}
+                        title={isVendor ? 'Pembayaran Vendor' : isEmployee ? 'Gaji Karyawan' : 'Pembayaran Tim'}
                         value={stats.totalUnpaid}
                         subtitle="Belum dibayar"
                         iconColorVariant="error"
@@ -89,7 +90,7 @@ const TeamSectionStats: React.FC<TeamSectionStatsProps> = ({
                 >
                     <ModernStatCard
                         icon={<UserCheckIcon className="w-3.5 h-3.5 sm:w-5 sm:h-5" />}
-                        title={isVendor ? 'Top Vendor' : 'Top Tim'}
+                        title={isVendor ? 'Top Vendor' : isEmployee ? 'Top Karyawan' : 'Top Tim'}
                         value={stats.topRatedName}
                         subtitle={`Rating: ${stats.topRatedRating}`}
                         iconColorVariant="success"
@@ -127,7 +128,7 @@ const TeamSectionStats: React.FC<TeamSectionStatsProps> = ({
                             icon={<CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5" />}
                             title="Acara Pernikahan Terkait"
                             value={stats.totalWeddingEvents.toString()}
-                            subtitle={isVendor ? 'Event terkait vendor' : 'Event ditangani tim'}
+                            subtitle={isVendor ? 'Event terkait vendor' : isEmployee ? 'Event karyawan' : 'Event ditangani tim'}
                             iconColorVariant="primary"
                             compactOnMobile
                         />
@@ -138,7 +139,7 @@ const TeamSectionStats: React.FC<TeamSectionStatsProps> = ({
                     >
                         <ModernStatCard
                             icon={<DollarSignIcon className="w-4 h-4 sm:w-5 sm:h-5" />}
-                            title={isVendor ? 'Pembayaran Vendor' : 'Pembayaran Tim'}
+                            title={isVendor ? 'Pembayaran Vendor' : isEmployee ? 'Gaji Karyawan' : 'Pembayaran Tim'}
                             value={stats.totalPaid}
                             subtitle={`Lunas: ${stats.totalPaidCount} | Pending: ${stats.totalUnpaidCount}`}
                             iconColorVariant="primary"

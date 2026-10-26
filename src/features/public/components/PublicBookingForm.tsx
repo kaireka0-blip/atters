@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { ChevronDown, Package as PackageIcon } from 'lucide-react';
-import { REGIONS } from '../../../types';
 import { Client, Project, Package, AddOn, Transaction, Profile, Card, FinancialPocket, ClientStatus, PaymentStatus, TransactionType, PromoCode, Lead, LeadStatus, ContactChannel, ClientType, PublicBookingFormProps, BookingStatus, ViewType } from '../../../types';
 import Modal from '../../../shared/ui/Modal';
 import { MessageSquareIcon, cleanPhoneNumber } from '../../../constants';
@@ -10,6 +9,7 @@ import { createLead as createLeadRow, updateLead as updateLeadRow } from '../../
 import { uploadDpProof } from '../../../services/storage';
 import { createTransaction } from '../../../services/transactions';
 import { mergeTransaction, mergeById } from '../utils/publicBookingWrites';
+import { buildPackageRegionOptions } from '../../../utils/packageRegions';
 import { clearPublicDrafts, hydrateForm, inheritFromPackagesDraft, isFormEmpty, readBookingDraft, readPackagesDraft, writeBookingDraft } from '../utils/publicDraftStore';
 import RupiahInput from '../../../shared/form/RupiahInput';
 import { buildPublicShareUrl, getPublicBookingRegionOptions, normalizePublicBookingRegion, resolvePackageShareIdentifier, toPublicNameSlug } from '../../../utils/publicRouting';
@@ -18,8 +18,6 @@ import { generateUUID } from '../../../utils/uuid';
 const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
 }
-const titleCase = (s: string) => s.replace(/\b\w/g, c => c.toUpperCase());
-
 const initialFormState = {
     clientName: '',
     email: '',
@@ -176,13 +174,8 @@ const PublicBookingForm: React.FC<PublicBookingFormProps> = ({
         return Array.from(set).sort((a, b) => a.localeCompare(b));
     }, [packages]);
     const unionRegions = useMemo(() => {
-        const baseVals = REGIONS.map(r => r.value.toLowerCase());
-        const extra = existingRegions.filter(er => !baseVals.includes(er.toLowerCase()));
-        return [
-            ...REGIONS.map(r => ({ value: r.value, label: r.label })),
-            ...extra.map(er => ({ value: er, label: titleCase(er) })),
-        ];
-    }, [existingRegions]);
+        return buildPackageRegionOptions(existingRegions, userProfile?.publicPageConfig?.packageRegions);
+    }, [existingRegions, userProfile?.publicPageConfig?.packageRegions]);
 
     const regionOptions = useMemo(() => getPublicBookingRegionOptions(unionRegions), [unionRegions]);
 

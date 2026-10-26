@@ -451,18 +451,86 @@ Terima kasih!`;
 
 export const DEFAULT_TERMS_AND_CONDITIONS = `1. Dp bersifat Non Refund.`;
 
-export const DEFAULT_PACKAGE_SHARE_TEMPLATE = `Halo {leadName}!`;
+export const DEFAULT_PACKAGE_SHARE_TEMPLATE = `Halo {leadName}! 👋
 
-export const DEFAULT_BOOKING_FORM_TEMPLATE = `Halo {leadName}!`;
+Terima kasih telah menghubungi {companyName}. Berikut katalog paket yang bisa Anda lihat:
+
+{packageLink}
+
+Silakan pilih paket yang sesuai. Jika ada pertanyaan, kami siap membantu.
+
+Salam,
+{companyName}`;
+
+export const DEFAULT_BOOKING_FORM_TEMPLATE = `Halo {leadName}! 👋
+
+Terima kasih atas ketertarikan Anda menggunakan layanan {companyName}.
+
+Silakan lengkapi formulir booking melalui tautan berikut:
+{bookingFormLink}
+
+Setelah formulir dikirim, tim kami akan menghubungi Anda untuk langkah selanjutnya.
+
+Salam,
+{companyName}`;
 
 // --- NEW SHARE TEMPLATES ---
-export const DEFAULT_INVOICE_SHARE_TEMPLATE = `Halo *{clientName}*!`;
+export const DEFAULT_INVOICE_SHARE_TEMPLATE = `Halo *{clientName}*! 👋
 
-export const DEFAULT_RECEIPT_SHARE_TEMPLATE = `Halo *{clientName}*!`;
+Berikut invoice untuk acara *{projectName}* bersama *{companyName}*.
 
-export const DEFAULT_EXPENSE_SHARE_TEMPLATE = `Halo *{targetName}*!`;
+📋 Rincian pembayaran:
+• Total biaya: *{totalCost}*
+• Sudah dibayar: {amountPaid}
+• Sisa pembayaran: *{sisaTagihan}*
 
-export const DEFAULT_PORTAL_SHARE_TEMPLATE = `Halo {clientName}!`;
+📄 Lihat dan unduh invoice:
+{invoiceLink}
+
+Terima kasih atas kepercayaan Anda. 🙏
+Salam,
+{companyName}`;
+
+export const DEFAULT_RECEIPT_SHARE_TEMPLATE = `Halo *{clientName}*! 👋
+
+Pembayaran untuk acara *{projectName}* telah kami terima. Berikut detailnya:
+
+• Tanggal: {txDate}
+• Jumlah: *{txAmount}*
+• Metode: {txMethod}
+• Keterangan: {txDesc}
+
+📄 Lihat tanda terima:
+{receiptLink}
+
+Terima kasih atas pembayarannya. 🙏
+Salam,
+{companyName}`;
+
+export const DEFAULT_EXPENSE_SHARE_TEMPLATE = `Halo *{targetName}*! 👋
+
+Berikut bukti pengeluaran atau slip pembayaran dari *{companyName}*:
+
+• Tanggal: {txDate}
+• Jumlah: *{txAmount}*
+• Metode: {txMethod}
+• Keterangan: {txDesc}
+
+📄 Lihat slip pembayaran:
+{receiptLink}
+
+Terima kasih.`;
+
+export const DEFAULT_PORTAL_SHARE_TEMPLATE = `Halo {clientName}! 👋
+
+Salam dari tim *{companyName}* 💍
+
+Melalui Portal Pengantin, Anda dapat melihat progres persiapan acara, detail pembayaran, dan paket yang dipilih.
+
+🔗 Buka portal Anda:
+{portalLink}
+
+Jika ada pertanyaan, silakan hubungi kami. Semoga membantu! 🙏`;
 
 
 // --- CHAT TEMPLATES ---

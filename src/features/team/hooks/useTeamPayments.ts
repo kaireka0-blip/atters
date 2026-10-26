@@ -34,6 +34,7 @@ import {
 } from '../../../services/teamProjectPayments';
 import {
     createTransactions as createTransactionsApi,
+    deleteTransaction as deleteTransactionApi,
     listTransactions as listTransactionsApi,
     updateCardBalance as updateCardBalanceApi,
 } from '../../../services/transactions';
@@ -43,7 +44,7 @@ import {
     updateTeamPaymentRecord,
 } from '../../../services/teamPaymentRecords';
 import { updatePocket as updatePocketRow } from '../../../services/pockets';
-import { formatCurrency } from '../utils/teamUtils';
+import { formatCurrency, getEmployeeSalaryRecordNumber } from '../utils/teamUtils';
 import PaymentSlipDocument from '../components/PaymentSlipDocument';
 import { generatePDFBlob } from '../../../shared/utils/pdfUtils';
 import { buildPaymentSlipFileName, buildPaymentSlipPdf, downloadPaymentSlipPdf } from '../utils/paymentSlipPdf';
@@ -219,6 +220,140 @@ export const useTeamPayments = ({
 
         setDetailTab('create-payment');
     }, [selectedMember, projectsToPay, selectedMemberUnpaidProjects, pockets, setDetailTab]);
+
+    const handleCreateSinglePayment = useCallback((projectPaymentId: string) => {
+        if (!selectedMember) return;
+        const payment = selectedMemberUnpaidProjects.find(item => item.id === projectPaymentId);
+        if (!payment) return;
+
+        setProjectsToPay([projectPaymentId]);
+        setPaymentAmount(payment.fee);
+        const budgetPocket = pockets.find(pocket => pocket.type === PocketType.EXPENSE);
+        setPaymentSourceId(budgetPocket && budgetPocket.amount >= payment.fee ? `pocket-${budgetPocket.id}` : '');
+        setDetailTab('create-payment');
+    }, [selectedMember, selectedMemberUnpaidProjects, pockets, setDetailTab]);
+
+    const handlePayMonthlySalary = useCallback(async (month: string) => {
+        if (paymentSubmissionLock.current) return;
+        paymentSubmissionLock.current = true;
+        try {
+            if (!selectedMember || selectedMember.category !== 'Karyawan') return;
+            if (!/^\d{4}-\d{2}$/.test(month)) {
+                showNotification('Pilih bulan gaji yang valid.');
+                return;
+            }
+            const amount = Number(selectedMember.standardFee) || 0;
+            if (amount <= 0) {
+                showNotification('Isi gaji bulanan karyawan terlebih dahulu.');
+                return;
+            }
+            const recordNumber = getEmployeeSalaryRecordNumber(selectedMember.id, month);
+            if (teamPaymentRecords.some(record => record.recordNumber === recordNumber)) {
+                showNotification('Gaji untuk bulan ini sudah dibayarkan.');
+                return;
+            }
+            if (!paymentSourceId) {
+                showNotification('Pilih sumber dana sebelum membayar gaji.');
+                return;
+            }
+
+            const paidDate = new Date();
+            const date = `${paidDate.getFullYear()}-${String(paidDate.getMonth() + 1).padStart(2, '0')}-${String(paidDate.getDate()).padStart(2, '0')}`;
+            let method: Transaction['method'] = 'Transfer Bank';
+            let cardId: string | undefined;
+            let pocketId: string | undefined;
+            let selectedPocket: FinancialPocket | undefined;
+
+            if (paymentSourceId.startsWith('card-')) {
+                cardId = paymentSourceId.slice('card-'.length);
+                const card = cards.find(item => item.id === cardId);
+                if (!card || card.balance < amount) {
+                    showNotification('Saldo kartu tidak mencukupi untuk membayar gaji.');
+                    return;
+                }
+                method = card.cardType === CardType.TUNAI ? 'Tunai' : 'Kartu';
+            } else if (paymentSourceId.startsWith('pocket-')) {
+                pocketId = paymentSourceId.slice('pocket-'.length);
+                selectedPocket = pockets.find(item => item.id === pocketId);
+                if (!selectedPocket || selectedPocket.amount < amount) {
+                    showNotification('Saldo kantong tidak mencukupi untuk membayar gaji.');
+                    return;
+                }
+                cardId = selectedPocket.sourceCardId;
+                if (cardId) {
+                    const sourceCard = cards.find(item => item.id === cardId);
+                    if (!sourceCard || sourceCard.balance < amount) {
+                        showNotification('Saldo kartu sumber kantong tidak mencukupi.');
+                        return;
+                    }
+                }
+                method = 'Sistem';
+            } else {
+                showNotification('Pilih sumber dana yang valid.');
+                return;
+            }
+
+            const [year, monthNumber] = month.split('-');
+            const monthLabel = new Date(Number(year), Number(monthNumber) - 1, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+            const [transaction] = await createTransactionsApi([{
+                date,
+                description: `Gaji Bulanan - ${selectedMember.name} (${monthLabel})`,
+                amount,
+                type: TransactionType.EXPENSE,
+                category: 'Gaji Karyawan',
+                method,
+                pocketId,
+                cardId,
+            }]);
+
+            let paymentRecord: TeamPaymentRecord;
+            try {
+                paymentRecord = await createTeamPaymentRecord({
+                    recordNumber,
+                    teamMemberId: selectedMember.id,
+                    date,
+                    projectPaymentIds: [],
+                    totalAmount: amount,
+                });
+            } catch (error) {
+                try { await deleteTransactionApi(transaction.id); } catch (rollbackError) {
+                    console.error('[useTeamPayments] Failed to roll back salary transaction:', rollbackError);
+                }
+                throw error;
+            }
+
+            let balanceWarning = false;
+            if (cardId) {
+                try {
+                    await updateCardBalanceApi(cardId, -amount);
+                    setCards(previous => previous.map(card => card.id === cardId ? { ...card, balance: card.balance - amount } : card));
+                } catch (error) {
+                    console.error('[useTeamPayments] Failed to update salary source card:', error);
+                    balanceWarning = true;
+                }
+            }
+            if (selectedPocket && pocketId) {
+                try {
+                    await updatePocketRow(pocketId, { amount: selectedPocket.amount - amount });
+                    setPockets(previous => previous.map(pocket => pocket.id === pocketId ? { ...pocket, amount: pocket.amount - amount } : pocket));
+                } catch (error) {
+                    console.error('[useTeamPayments] Failed to update salary pocket:', error);
+                    balanceWarning = true;
+                }
+            }
+
+            setTransactions(previous => [transaction, ...previous]);
+            setTeamPaymentRecords(previous => [paymentRecord, ...previous]);
+            showNotification(balanceWarning
+                ? 'Gaji tercatat, tetapi saldo sumber dana gagal diperbarui.'
+                : `Gaji ${monthLabel} untuk ${selectedMember.name} berhasil dibayarkan.`);
+        } catch (error) {
+            console.error('[useTeamPayments] Monthly employee salary payment failed:', error);
+            showNotification('Gaji gagal dibayarkan. Periksa koneksi dan coba lagi.');
+        } finally {
+            paymentSubmissionLock.current = false;
+        }
+    }, [selectedMember, teamPaymentRecords, paymentSourceId, cards, pockets, setCards, setPockets, setTransactions, setTeamPaymentRecords, showNotification]);
 
     // ── handlePay — full payment execution ──────────────────────────────────
     const handlePay = useCallback(async () => {
@@ -611,6 +746,8 @@ export const useTeamPayments = ({
 
         // Handlers
         handleCreatePayment,
+        handleCreateSinglePayment,
+        handlePayMonthlySalary,
         handlePay,
         handleSaveSignature,
         handleDownloadPDF,

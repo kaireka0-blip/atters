@@ -1,7 +1,7 @@
 import React from 'react';
 import { UsersIcon, UserCheckIcon, FileTextIcon, HistoryIcon } from '../../../constants';
 
-export type MainTab = 'team' | 'vendor' | 'bukti' | 'analytics';
+export type MainTab = 'team' | 'employee' | 'vendor' | 'bukti' | 'analytics';
 
 interface TabConfig {
   id: MainTab;
@@ -15,6 +15,7 @@ interface TeamTabNavProps {
   activeTab: MainTab;
   onTabChange: (tab: MainTab) => void;
   teamCount: number;
+  employeeCount: number;
   vendorCount: number;
   unpaidCount: number;
 }
@@ -23,6 +24,7 @@ const TeamTabNav: React.FC<TeamTabNavProps> = ({
   activeTab,
   onTabChange,
   teamCount,
+  employeeCount,
   vendorCount,
   unpaidCount,
 }) => {
@@ -32,6 +34,13 @@ const TeamTabNav: React.FC<TeamTabNavProps> = ({
       label: 'Tim Internal',
       icon: UsersIcon,
       badge: teamCount,
+      badgeVariant: 'default',
+    },
+    {
+      id: 'employee',
+      label: 'Karyawan',
+      icon: UsersIcon,
+      badge: employeeCount,
       badgeVariant: 'default',
     },
     {
@@ -74,7 +83,7 @@ const TeamTabNav: React.FC<TeamTabNavProps> = ({
           >
             <span className="hidden sm:inline">{tab.label}</span>
             <span className="sm:hidden">
-              {tab.id === 'team' ? 'Tim' : tab.id === 'vendor' ? 'Vendor' : tab.id === 'bukti' ? 'Bukti' : 'Analitik'}
+              {tab.id === 'team' ? 'Tim' : tab.id === 'employee' ? 'Karyawan' : tab.id === 'vendor' ? 'Vendor' : tab.id === 'bukti' ? 'Bukti' : 'Analitik'}
             </span>
             {tab.badge !== undefined && (
               <span
